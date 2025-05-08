@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "324572434759",
-    "project_id": "refill-e9533",
-    "storage_bucket": "refill-e9533.firebasestorage.app"
+    "project_number": "163101167901",
+    "project_id": "re-fill-59fc9",
+    "storage_bucket": "re-fill-59fc9.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:324572434759:android:2d49c2064511a2c5d73c62",
+        "mobilesdk_app_id": "1:163101167901:android:b80b20ad0d1a168953d1f4",
         "android_client_info": {
           "package_name": "com.refill.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "163101167901-7e3fesaqlphjcsb7kot1asjta5fjnj71.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.refill.app",
+            "certificate_hash": "b5615f9fdd8014a6e7a632547c2ce44fc7c251b5"
+          }
+        },
+        {
+          "client_id": "163101167901-nfashr0v8saf1l58cqv72nfcvfng36br.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBKuP73NQx-pgitKwKLISz7Fie259U7Hz0"
+          "current_key": "AIzaSyD6R2Nmqneg7vx3zitKlNO8DjEJ65eJrAM"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "163101167901-nfashr0v8saf1l58cqv72nfcvfng36br.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
