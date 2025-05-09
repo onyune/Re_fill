@@ -7,14 +7,9 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '설정',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2563EB),
-          ),
-        ),
-        backgroundColor: Colors.white,
+        title: const Text('설정'),
+        backgroundColor: const Color(0xFF2563EB),
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
         automaticallyImplyLeading: false,

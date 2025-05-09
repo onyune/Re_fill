@@ -6,22 +6,18 @@ class FindPasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        automaticallyImplyLeading: true,
+      ),
+      backgroundColor: const Color(0xFFFBF7FF),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.fromLTRB(30, 0, 30, 60), //배열 위치 조정(좌,상,우,하)
         child: Center(
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
-                  'Re:fill',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2563EB),
-                  ),
-                ),
-                const SizedBox(height: 32),
                 const Text(
                   '비밀번호 찾기',
                   style: TextStyle(
@@ -30,7 +26,7 @@ class FindPasswordScreen extends StatelessWidget {
                     color: Color(0xFF2563EB),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 TextField(
                   decoration: InputDecoration(
                     labelText: 'ID',
@@ -68,7 +64,10 @@ class FindPasswordScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('비밀번호 찾기'),
+                  child: const Text(
+                      '비밀번호 찾기',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
                 ),
               ],
             ),

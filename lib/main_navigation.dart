@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
-import 'auto_order_screen.dart';
-import 'manual_order_screen.dart';
+import 'order_screen.dart';
+import 'chat_screen.dart';
 import 'settings_screen.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -15,8 +15,8 @@ class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   final List<Widget> _screens = const [
     HomeScreen(),
-    AutoOrderScreen(),
-    ManualOrderScreen(),
+    OrderScreen(),
+    ChatScreen(),
     SettingsScreen(),
   ];
 
@@ -34,8 +34,8 @@ class _MainNavigationState extends State<MainNavigation> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.flash_on), label: '자동 발주'),
-          BottomNavigationBarItem(icon: Icon(Icons.edit), label: '수동 발주'),
+          BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: '발주'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: '채팅'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
         ],
       ),
