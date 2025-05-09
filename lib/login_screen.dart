@@ -3,6 +3,7 @@ import 'signup_screen.dart';
 import 'find_id_screen.dart';
 import 'find_password_screen.dart';
 import 'package:refill/main_navigation.dart';
+import 'package:refill/google_auth_service/auth_service.dart';    // 구글 계정 로그인 관련 함수 파일 import
 
 
 class LoginScreen extends StatefulWidget {
@@ -134,11 +135,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
 
                 OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MainNavigation()),
-                    );
+                  onPressed: () async {
+                    final userCredential = await AuthService.signInWithGoogle();
+                    if (userCredential != null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MainNavigation()),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Google 로그인 실패")),
+                      );
+                    }
                   },
                   icon: Image.asset(
                     'assets/google_logo.png',
