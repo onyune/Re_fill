@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'main_navigation.dart';
+
+import 'login_screen.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -47,13 +49,27 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final auth = FirebaseAuth.instance;
+      final userCredential = await auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
+      final uid = userCredential.user!.uid;
+      final database = FirebaseDatabase.instance.ref();
+      await database.child('users').child(uid).set({
+        "id":_idController.text.trim(),
+        "name":_nameController.text.trim(),
+        "email":_emailController.text.trim(),
+        "created_at": DateTime.now().toIso8601String(),
+      });
+
+      if (!mounted) return;
+
+      _showSnackBar("회원가입이 완료되었습니다. 로그인 화면으로 이동합니다.");
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
