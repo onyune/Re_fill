@@ -1,8 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'main_navigation.dart';
 import 'login_screen.dart';
-import 'package:firebase_database/firebase_database.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -38,6 +37,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _signUp() async {
+    print("회원가입 시작");
     if (!_formKey.currentState!.validate()) return;
     if (!_isIdChecked) {
       _showSnackBar('ID 중복 확인을 해주세요.');
@@ -49,29 +49,18 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     try {
-      final auth = FirebaseAuth.instance;
-      final userCredential = await auth.createUserWithEmailAndPassword(
+      print("회원가입 시도");
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-
-      final uid = userCredential.user!.uid;
-      final database = FirebaseDatabase.instance.ref();
-      await database.child('users').child(uid).set({
-        "id":_idController.text.trim(),
-        "name":_nameController.text.trim(),
-        "email":_emailController.text.trim(),
-        "created_at": DateTime.now().toIso8601String(),
-      });
-
-      if (!mounted) return;
-
-      _showSnackBar("회원가입이 완료되었습니다. 로그인 화면으로 이동합니다.");
+      print("화면 전환 시도");
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } on FirebaseAuthException catch (e) {
+      print("화면 에러");
       if (e.code == 'email-already-in-use') {
         _showSnackBar('이미 등록된 이메일입니다.');
       } else {
