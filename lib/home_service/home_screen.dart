@@ -12,11 +12,7 @@ class HomeScreen extends StatelessWidget {
 
       backgroundColor: Colors.white,
 
-      appBar: AppBar(
-        title: const Text("홈"),
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-      ),
+
 
       body: SafeArea(
         child: Padding(

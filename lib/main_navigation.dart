@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'order_screen.dart';
-import 'chat_screen.dart';
-import 'settings_screen.dart';
+import 'home_service/home_screen.dart';
+import 'order_service/order_screen.dart';
+import 'chat_service/chat_screen.dart';
+import 'setting_service/settings_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -23,6 +23,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -34,10 +35,6 @@ class _MainNavigationState extends State<MainNavigation> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-
-          BottomNavigationBarItem(icon: Icon(Icons.edit), label: '발주'),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: '채팅'),
-
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: '발주'),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: '채팅'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),

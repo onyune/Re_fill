@@ -7,12 +7,18 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('설정'),
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        automaticallyImplyLeading: false,
+        title: const Text(
+          '설정',
+          style: TextStyle(
+            color: Color(0xFF2563EB), // mainBlue 직접 넣기
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        backgroundColor: Colors.transparent, // 파란색 띠 제거
+        elevation: 0, // 그림자 제거
+        centerTitle: false, // 왼쪽 정렬
+        iconTheme: const IconThemeData(color: Color(0xFF2563EB)), // 아이콘도 파란색
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
