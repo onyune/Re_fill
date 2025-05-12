@@ -8,7 +8,15 @@ class HomeScreen extends StatelessWidget {
     const mainBlue = Color(0xFF2563EB); // Re:fill 주색
 
     return Scaffold(
+
       backgroundColor: Colors.white,
+
+      appBar: AppBar(
+        title: const Text("홈"),
+        backgroundColor: const Color(0xFF2563EB),
+        foregroundColor: Colors.white,
+      ),
+
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),

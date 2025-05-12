@@ -64,103 +64,125 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    bool obscure = false,
-    String? Function(String?)? validator,
-    Widget? suffix,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: controller,
-          obscureText: obscure,
-          decoration: InputDecoration(
-            labelText: label,
-            suffixIcon: suffix,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-          validator: validator,
-        ),
-        const SizedBox(height: 12),
-      ],
+  InputDecoration _buildInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+      focusedBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('회원가입')),
+      appBar: AppBar(
+        elevation: 0,
+        automaticallyImplyLeading: true,
+      ),
+      backgroundColor: const Color(0xFFFBF7FF),
       body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: ListView(
+        padding: const EdgeInsets.fromLTRB(30, 20, 30, 0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      label: 'ID',
-                      controller: _idController,
-                      validator: (value) =>
-                      value == null || value.isEmpty ? 'ID를 입력해주세요.' : null,
-                    ),
+              const Center(
+                child: Text(
+                  '회원가입',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2563EB),
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: _checkIdDuplication,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
-                    child: const Text('중복확인'),
-                  ),
-                ],
-              ),
-              _buildTextField(
-                label: '이름',
-                controller: _nameController,
-                validator: (v) => v == null || v.isEmpty ? '이름을 입력해주세요.' : null,
-              ),
-              _buildTextField(
-                label: '이메일',
-                controller: _emailController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return '이메일을 입력해주세요.';
-                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                  if (!emailRegex.hasMatch(value)) return '올바른 이메일 형식이 아닙니다.';
-                  return null;
-                },
-              ),
-              _buildTextField(
-                label: '비밀번호',
-                controller: _passwordController,
-                obscure: true,
-                validator: (value) {
-                  if (value == null || value.length < 6) return '6자 이상 입력해주세요.';
-                  if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(value)) {
-                    return '특수문자를 포함해야 합니다.';
-                  }
-                  return null;
-                },
-              ),
-              _buildTextField(
-                label: '비밀번호 확인',
-                controller: _checkPasswordController,
-                obscure: true,
-                validator: (v) => null,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _signUp,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48),
-                  backgroundColor: Colors.blue,
                 ),
-                child: const Text('회원가입'),
+              ),
+              const SizedBox(height: 40),
+              Form(
+                key: _formKey,
+                child: ListView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _idController,
+                          decoration: _buildInputDecoration('ID'),
+                          validator: (value) => value == null || value.isEmpty ? 'ID를 입력해주세요.' : null,
+                       ),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton(
+                        onPressed: _checkIdDuplication,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                      ),
+                      child: const Text('중복확인', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: _buildInputDecoration('이름'),
+                  validator: (v) => v == null || v.isEmpty ? '이름을 입력해주세요.' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: _buildInputDecoration('이메일'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return '이메일을 입력해주세요.';
+                    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                    if (!emailRegex.hasMatch(value)) return '올바른 이메일 형식이 아닙니다.';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: _buildInputDecoration('비밀번호'),
+                  validator: (value) {
+                    if (value == null || value.length < 6) return '6자 이상 입력해주세요.';
+                    if (!RegExp(r'[!@#\\$%^&*(),.?":{}|<>]').hasMatch(value)) {
+                      return '특수문자를 포함해야 합니다.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _checkPasswordController,
+                  obscureText: true,
+                  decoration: _buildInputDecoration('비밀번호 확인'),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _signUp,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 56),
+                    backgroundColor: const Color(0xFF2563EB),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    '회원가입',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+                ],
+                ),
               ),
             ],
           ),

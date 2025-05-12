@@ -3,6 +3,7 @@ import 'signup_screen.dart';
 import 'find_id_screen.dart';
 import 'find_password_screen.dart';
 import 'package:refill/main_navigation.dart';
+import 'package:refill/google_auth_service/auth_service.dart';    // 구글 계정 로그인 관련 함수 파일 import
 
 
 class LoginScreen extends StatefulWidget {
@@ -89,56 +90,72 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('로그인'),
+                  child: const Text(
+                    '로그인',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
-                const SizedBox(height: 24),
+               const SizedBox(height: 5),
 
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => const SignupScreen()),
+                          MaterialPageRoute(builder: (context) => const SignupScreen()),
                         );
                       },
                       child: const Text("회원가입"),
                     ),
-                    const Text("|", style: TextStyle(color: Colors.grey)),
+                    Container(
+                      width: 1,
+                      height: 20,
+                      color: Colors.grey,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => const FindIdScreen()),
+                          MaterialPageRoute(builder: (context) => const FindIdScreen()),
                         );
                       },
                       child: const Text("아이디 찾기"),
                     ),
-                    const Text("|", style: TextStyle(color: Colors.grey)),
+                    Container(
+                      width: 1,
+                      height: 20,
+                      color: Colors.grey,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => const FindPasswordScreen()),
+                          MaterialPageRoute(builder: (context) => const FindPasswordScreen()),
                         );
                       },
-                      child: const Text("아이디 찾기"),
+                      child: const Text("비밀번호 찾기"),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
 
                 OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MainNavigation()),
-                    );
+                  onPressed: () async {
+                    final userCredential = await AuthService.signInWithGoogle();
+                    if (userCredential != null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MainNavigation()),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Google 로그인 실패")),
+                      );
+                    }
                   },
                   icon: Image.asset(
                     'assets/google_logo.png',
