@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
-import 'auto_order_screen.dart';
-import 'manual_order_screen.dart';
+import 'order_screen.dart';
+import 'chat_screen.dart';
 import 'settings_screen.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -15,8 +15,8 @@ class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   final List<Widget> _screens = const [
     HomeScreen(),
-    AutoOrderScreen(),
-    ManualOrderScreen(),
+    OrderScreen(),
+    ChatScreen(),
     SettingsScreen(),
   ];
 
