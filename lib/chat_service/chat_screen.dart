@@ -23,19 +23,33 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const mainBlue = Color(0xFF2563EB);
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           '채팅',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Color(0xFF2563EB), // mainBlue 직접 넣기
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
-        backgroundColor: const Color(0xFF2563EB),
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.transparent, // 파란색 띠 제거
+        elevation: 0, // 그림자 제거
+        centerTitle: false, // 왼쪽 정렬
+        iconTheme: const IconThemeData(color: Color(0xFF2563EB)), // 아이콘도 파란색
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
+            child: _messages.isEmpty
+                ? const Center(
+              child: Text('아직 메시지가 없습니다.',
+                  style: TextStyle(fontSize: 16, color: Colors.grey)),
+            )
+                : ListView.builder(
               padding: const EdgeInsets.all(12),
               reverse: true,
               itemCount: _messages.length,
@@ -47,7 +61,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB),
+                      color: mainBlue,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -72,7 +86,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       hintText: '메시지를 입력하세요',
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: BorderSide.none,
@@ -84,7 +99,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 IconButton(
                   onPressed: _sendMessage,
                   icon: const Icon(Icons.send),
-                  color: const Color(0xFF2563EB),
+                  color: mainBlue,
                 ),
               ],
             ),
