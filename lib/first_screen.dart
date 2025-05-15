@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'create_store_screen.dart';
 
 class FirstScreen extends StatelessWidget {
   const FirstScreen({super.key});
@@ -24,6 +25,10 @@ class FirstScreen extends StatelessWidget {
               Center(
                 child: ElevatedButton(
                   onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CreateStoreScreen()),
+                    );
                     // 매장 생성 화면으로 이동
                   },
                   style: ElevatedButton.styleFrom(

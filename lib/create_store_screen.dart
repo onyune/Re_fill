@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'main_navigation.dart';
 
 class CreateStoreScreen extends StatelessWidget {
   const CreateStoreScreen({super.key});
@@ -14,28 +17,58 @@ class CreateStoreScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: storeNameController,
-              decoration: const InputDecoration(labelText: '매장 이름'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: addressController,
-              decoration: const InputDecoration(labelText: '주소'),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                // 매장 생성 처리
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF2563EB)),
-              child: const Text('생성'),
-            )
-          ],
+      resizeToAvoidBottomInset: true, // 키보드 때문에 밀림 방지
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(), // 빈 화면 탭 시 키보드 닫힘
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              TextField(
+                controller: storeNameController,
+                decoration: const InputDecoration(labelText: '매장 이름'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: addressController,
+                decoration: const InputDecoration(labelText: '주소'),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () async {
+                  final storeName = storeNameController.text.trim();
+                  final address = addressController.text.trim();
+                  final uid = FirebaseAuth.instance.currentUser?.uid;
+
+                  if (storeName.isEmpty || address.isEmpty || uid == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("모든 항목을 입력해주세요.")),
+                    );
+                    return;
+                  }
+
+                  await FirebaseFirestore.instance.collection('stores').add({
+                    'storeName': storeName,
+                    'address': address,
+                    'ownerUid': uid,
+                    'createdAt': Timestamp.now(),
+                  });
+
+                  await FirebaseFirestore.instance.collection('users').doc(uid).update({
+                    'hasStore': true,
+                  });
+
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MainNavigation()),
+                        (route) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF2563EB)),
+                child: const Text('생성'),
+              )
+            ],
+          ),
         ),
       ),
     );
