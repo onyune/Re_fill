@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:refill/login_service/login_screen.dart';
+import 'package:refill/settings/colors.dart';
+
 
 class FindPasswordScreen extends StatefulWidget {
   const FindPasswordScreen({super.key});
@@ -37,20 +39,13 @@ class _FindPasswordScreenState extends State<FindPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '비밀번호 찾기',
-          style: TextStyle(
-            color: Color(0xFF2563EB),
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
+        title: null,
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: Color(0xFF2563EB)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
-      backgroundColor: const Color(0xFFFBF7FF),
+      backgroundColor: AppColors.background,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(30, 0, 30, 60),
         child: Center(
@@ -63,28 +58,30 @@ class _FindPasswordScreenState extends State<FindPasswordScreen> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2563EB),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 32),
 
+                const Text("이메일"),
+                const SizedBox(height: 8),
                 // 이메일 입력 필드만 유지
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: 'E-Mail',
+                    hintText: '이메일을 입력하세요',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 ElevatedButton(
                   onPressed: _resetPassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
+                    backgroundColor: AppColors.primary,
                     minimumSize: const Size(double.infinity, 48),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -105,7 +102,7 @@ class _FindPasswordScreenState extends State<FindPasswordScreen> {
                     },
                     child: const Text(
                       "로그인 화면으로 돌아가기",
-                      style: TextStyle(color: Color(0xFF2563EB)),
+                      style: TextStyle(color: AppColors.primary),
                     ),
                   ),
                 ),
