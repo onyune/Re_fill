@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool lowStockNotification = true;
+  bool darkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -14,73 +22,131 @@ class SettingsScreen extends StatelessWidget {
         centerTitle: false,
         automaticallyImplyLeading: false,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
+      backgroundColor: const Color(0xFFFBF7FF),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.blueAccent.shade100),
-                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF2563EB)),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    '안녕하세요!\n관리자 ○○○ 님',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2563EB),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          '안녕하세요!',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Color(0xFF2563EB),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          '관리자 ○○○ 님',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            '멤버 목록',
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                        ),
-                      ),
-                      VerticalDivider(thickness: 1, width: 1),
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            '팀 관리',
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(width: 16),
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.person, size: 40, color: Colors.white),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            const Text('계정 설정', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: Text('재고 부족 알림 설정'),
-              value: true,
-              onChanged: (value) {},
-              activeColor: Color(0xFF2563EB),
+            const SizedBox(height: 24),
+
+            const Text(
+              '앱 설정',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SwitchListTile(
-              title: Text('다크 모드'),
-              value: false,
-              onChanged: (value) {},
-              activeColor: Color(0xFF2563EB),
+              contentPadding: EdgeInsets.zero,
+              title: const Text('재고 부족 알림 설정'),
+              value: lowStockNotification,
+              onChanged: (value) {
+                setState(() => lowStockNotification = value);
+              },
+              activeColor: const Color(0xFF2563EB),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('다크 모드'),
+              value: darkMode,
+              onChanged: (value) {
+                setState(() => darkMode = value);
+              },
+              activeColor: const Color(0xFF2563EB),
             ),
             const SizedBox(height: 24),
-            const Text('공지사항', style: TextStyle(fontSize: 16)),
+
+            const Text(
+              '매장 설정',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('매장 변경'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {},
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('팀 관리'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {},
+            ),
+            const SizedBox(height: 24),
+
+            const Text(
+              '개인/보안',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('비밀번호 변경'),
+              onTap: () {},
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('계정 탈퇴'),
+              onTap: () {},
+            ),
+            const SizedBox(height: 24),
+
+            // 로그아웃
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  // 로그아웃 처리
+                },
+                child: const Text(
+                  '로그아웃',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    decoration: TextDecoration.underline,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
-            const Text('문의', style: TextStyle(fontSize: 16)),
           ],
         ),
       ),
