@@ -1,20 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String? storeName;
+  bool isLoading = true;
+  static const mainBlue = Color(0xFF2563EB); // Re:fill 주색
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStoreName();
+  }
+
+  Future<void> _loadStoreName() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('stores')
+          .where('ownerUid', isEqualTo: uid)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        setState(() {
+          storeName = snapshot.docs.first['storeName'];
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          storeName = '매장을 먼저 생성해주세요';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        storeName = '매장 정보를 불러오는 중 오류';
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    const mainBlue = Color(0xFF2563EB); // Re:fill 주색
-
     return Scaffold(
-
       backgroundColor: Colors.white,
 
       appBar: AppBar(
         title: const Text("홈"),
-        backgroundColor: const Color(0xFF2563EB),
+        backgroundColor: mainBlue,
         foregroundColor: Colors.white,
       ),
 
@@ -25,9 +68,9 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 지점 이름
+                // 🔹 동적으로 불러온 매장명
                 Text(
-                  'OO커피 OO점',
+                  isLoading ? '불러오는 중...' : (storeName ?? '매장명 없음'),
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -58,14 +101,14 @@ class HomeScreen extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                    // 날씨 카드
+                      // 날씨 카드
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white, // 배경 흰색
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: mainBlue), // 테두리 파란색
+                            border: Border.all(color: mainBlue),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -80,7 +123,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                    // 재고 요약 카드
+                      // 재고 요약 카드
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(16),
@@ -129,8 +172,7 @@ class HomeScreen extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed:(){},
-
+                          onPressed: () {},
                           icon: const Icon(Icons.add_shopping_cart),
                           label: const Text('발주에 추가'),
                           style: ElevatedButton.styleFrom(
@@ -138,10 +180,10 @@ class HomeScreen extends StatelessWidget {
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                          ),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
                         ),
-                      ),
                       ),
                     ],
                   ),
