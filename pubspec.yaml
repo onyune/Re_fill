@@ -39,7 +39,9 @@ dependencies:
   google_sign_in: ^6.1.4
   firebase_database: ^10.4.5
   cloud_firestore: ^4.8.2
-  firebase_messaging: ^14.7.1
+  firebase_messaging: ^14.6.5
+  geolocator: ^10.1.0 #위치가져오기
+  http: ^0.13.5 #날씨 API 호출
 
 dev_dependencies:
   flutter_test:
