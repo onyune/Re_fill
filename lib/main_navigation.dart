@@ -3,6 +3,7 @@ import 'home_screen.dart';
 import 'order_screen.dart';
 import 'chat_screen.dart';
 import 'settings_screen.dart';
+import 'store_entry_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'main_navigation.dart';
+import 'package:refill/store_entry_screen.dart';
+
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -51,9 +52,10 @@ class _SignupScreenState extends State<SignupScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      if (!mounted) return; //비동기 함수 이후에 사용하여 오류, 새로 추가
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        MaterialPageRoute(builder: (_) => const StoreEntryScreen()), //MainNavigation -> StoreEntryScreen
       );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
