@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'weather_box.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -55,25 +55,8 @@ class HomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                     // 날씨 카드
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white, // 배경 흰색
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: mainBlue), // 테두리 파란색
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.wb_sunny, size: 32, color: mainBlue),
-                              SizedBox(height: 8),
-                              Text('맑음', style: TextStyle(fontWeight: FontWeight.bold, color: mainBlue)),
-                              Text('23°C', style: TextStyle(color: mainBlue)),
-                              Text('습도 55%', style: TextStyle(color: mainBlue)),
-                            ],
-                          ),
-                        ),
+                      const Expanded(
+                        child: WeatherBox(),
                       ),
                       const SizedBox(width: 12),
                     // 재고 요약 카드
