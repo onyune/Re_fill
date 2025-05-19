@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_service/home_screen.dart';
 import 'order_service/order_screen.dart';
-import 'chat_service/chat_screen.dart';
+import 'chat_service/chat_screen.dart'; // 오타 수정됨
 import 'setting_service/settings_screen.dart';
 
 class MainNavigation extends StatefulWidget {
