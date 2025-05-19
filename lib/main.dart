@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'splash_screen.dart';
-import 'login_screen.dart'; //  로그인 화면 경로
+import 'login_service/login_screen.dart'; //  로그인 화면 경로
 import 'main_navigation.dart'; // 홈으로 들어가는 메인 화면
 
 void main() async {

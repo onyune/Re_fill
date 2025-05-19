@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore import
 import 'package:flutter/material.dart';
-import 'package:refill/store_entry_screen.dart';
+import 'package:refill/login_service/store_entry_screen.dart';
 import 'first_screen.dart'; // 첫 화면 import
 
 class SignupScreen extends StatefulWidget {

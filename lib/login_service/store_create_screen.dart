@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import '../home_service/home_screen.dart';
 
 class StoreCreateScreen extends StatelessWidget {
   const StoreCreateScreen({super.key});

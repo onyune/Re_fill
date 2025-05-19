@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'order_screen.dart';
-import 'chat_screen.dart';
-import 'settings_screen.dart';
-import 'store_entry_screen.dart';
+import 'home_service/home_screen.dart';
+import 'order_service/order_screen.dart';
+import 'chat_serivce/chat_screen.dart';
+import 'setting_service/settings_screen.dart';
+import 'login_service/store_entry_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
