@@ -23,13 +23,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const mainBlue = Color(0xFF2563EB); // 프로젝트 파란색
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          '채팅',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: const Color(0xFF2563EB),
+        title: const Text('채팅', style: TextStyle(color: Colors.white)),
+        backgroundColor: mainBlue,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
@@ -47,7 +47,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB),
+                      color: mainBlue,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -84,7 +84,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 IconButton(
                   onPressed: _sendMessage,
                   icon: const Icon(Icons.send),
-                  color: const Color(0xFF2563EB),
+                  color: mainBlue,
                 ),
               ],
             ),

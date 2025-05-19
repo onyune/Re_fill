@@ -6,6 +6,7 @@ class InviteCodeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final inviteCodeController = TextEditingController();
     return Scaffold(
       backgroundColor: const Color(0xFFFBF7FF),
       appBar: AppBar(
@@ -46,6 +47,7 @@ class InviteCodeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             TextFormField(
+              controller: inviteCodeController,
               decoration: InputDecoration(
                 hintText: '초대 코드를 입력하세요.',
                 hintStyle: const TextStyle(color:  Colors.grey),
