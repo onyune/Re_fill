@@ -15,29 +15,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('설정'),
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
+        title: const Text(
+          '설정',
+          style: TextStyle(
+            color: Color(0xFF2563EB),
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        automaticallyImplyLeading: false,
+        iconTheme: const IconThemeData(color: Color(0xFF2563EB)),
       ),
       backgroundColor: const Color(0xFFFBF7FF),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 상단 유저 정보 박스
             Container(
               padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFF2563EB)),
+                border: Border.all(color: Color(0xFF2563EB)),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                  ),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,45 +72,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  const CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, size: 40, color: Colors.white),
-                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            const Text(
-              '앱 설정',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            // 앱 설정
+            const Text('앱 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('재고 부족 알림 설정'),
               value: lowStockNotification,
-              onChanged: (value) {
-                setState(() => lowStockNotification = value);
-              },
+              onChanged: (value) => setState(() => lowStockNotification = value),
               activeColor: const Color(0xFF2563EB),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('다크 모드'),
               value: darkMode,
-              onChanged: (value) {
-                setState(() => darkMode = value);
-              },
+              onChanged: (value) => setState(() => darkMode = value),
               activeColor: const Color(0xFF2563EB),
             ),
             const SizedBox(height: 24),
 
-            const Text(
-              '매장 설정',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            // 매장 설정
+            const Text('매장 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('매장 변경'),
@@ -114,10 +111,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            const Text(
-              '개인/보안',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            // 개인/보안
+            const Text('개인/보안', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('비밀번호 변경'),

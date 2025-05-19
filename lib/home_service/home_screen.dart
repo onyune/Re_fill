@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/home_service/weather_box.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -54,13 +55,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         title: const Text("홈"),
         backgroundColor: mainBlue,
         foregroundColor: Colors.white,
       ),
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -68,7 +67,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 🔹 동적으로 불러온 매장명
                 Text(
                   isLoading ? '불러오는 중...' : (storeName ?? '매장명 없음'),
                   style: const TextStyle(
@@ -79,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // 검색창
                 TextField(
                   decoration: InputDecoration(
                     hintText: '검색',
@@ -96,34 +93,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // 한눈에 보기 (날씨 + 재고 요약)
                 IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 날씨 카드
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: mainBlue),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.wb_sunny, size: 32, color: mainBlue),
-                              SizedBox(height: 8),
-                              Text('맑음', style: TextStyle(fontWeight: FontWeight.bold, color: mainBlue)),
-                              Text('23°C', style: TextStyle(color: mainBlue)),
-                              Text('습도 55%', style: TextStyle(color: mainBlue)),
-                            ],
-                          ),
-                        ),
+                      const Expanded(
+                        child: WeatherBox(),
                       ),
                       const SizedBox(width: 12),
-                      // 재고 요약 카드
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(16),
@@ -148,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 24),
 
-                // 재고 예측 추천
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
