@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore import
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:refill/login_service/store_entry_screen.dart';
-import 'first_screen.dart'; // 첫 화면 import
+import 'package:refill/login_service/login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -20,32 +20,72 @@ class _SignupScreenState extends State<SignupScreen> {
   final _idController = TextEditingController();
 
   bool _isIdChecked = false;
+  String? _emailErrorText;
 
   void _showSnackBar(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  void _checkIdDuplication() {
+  Future<void> _checkIdDuplication() async {
     final inputId = _idController.text.trim();
     if (inputId.isEmpty) {
       _showSnackBar('ID를 입력해주세요.');
-    } else {
-      setState(() {
-        _isIdChecked = true;
-      });
-      _showSnackBar('사용 가능한 ID입니다.');
+      return;
+    }
+
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('users')
+          .where('userId', isEqualTo: inputId)
+          .get();
+
+      if (query.docs.isEmpty) {
+        setState(() {
+          _isIdChecked = true;
+        });
+        _showSnackBar('사용 가능한 ID입니다.');
+      } else {
+        _showSnackBar('이미 사용 중인 ID입니다.');
+      }
+    } catch (e) {
+      _showSnackBar('중복 확인 중 오류 발생');
+      print(e);
+    }
+  }
+
+  Future<bool> isEmailDuplicated(String email) async {
+    try {
+      final methods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+      return methods.isNotEmpty;
+    } catch (e) {
+      print('이메일 중복 확인 중 오류: $e');
+      return false;
     }
   }
 
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (!_isIdChecked) {
       _showSnackBar('ID 중복 확인을 해주세요.');
       return;
     }
+
     if (_passwordController.text != _checkPasswordController.text) {
       _showSnackBar('비밀번호가 일치하지 않습니다.');
       return;
+    }
+
+    final isDuplicateEmail = await isEmailDuplicated(_emailController.text.trim());
+    if (isDuplicateEmail) {
+      setState(() {
+        _emailErrorText = '이미 등록된 이메일입니다.';
+      });
+      return;
+    } else {
+      setState(() {
+        _emailErrorText = null;
+      });
     }
 
     try {
@@ -54,27 +94,23 @@ class _SignupScreenState extends State<SignupScreen> {
         password: _passwordController.text.trim(),
       );
 
-      final uid = userCredential.user!.uid;
-
-      // Firestore에 사용자 정보 저장
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'uid': uid,
-        'email': _emailController.text.trim(),
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+        'userId': _idController.text.trim(),
         'name': _nameController.text.trim(),
-        'id': _idController.text.trim(),
-        'hasStore': false, // 매장 없음 표시
+        'email': _emailController.text.trim(),
+        'hasStore': false,
+        'createdAt': Timestamp.now(),
       });
-
-      if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const FirstScreen()),
+        MaterialPageRoute(builder: (_) => const StoreEntryScreen()),
       );
     } on FirebaseAuthException catch (e) {
-      print("회원가입 실패");
       if (e.code == 'email-already-in-use') {
-        _showSnackBar('이미 등록된 이메일입니다.');
+        setState(() {
+          _emailErrorText = '이미 등록된 이메일입니다.';
+        });
       } else {
         _showSnackBar('회원가입 실패: ${e.message}');
       }
@@ -90,6 +126,7 @@ class _SignupScreenState extends State<SignupScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      errorStyle: const TextStyle(color: Colors.red, fontSize: 13),
     );
   }
 
@@ -156,7 +193,14 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
-                      decoration: _buildInputDecoration('이메일'),
+                      decoration: _buildInputDecoration('이메일').copyWith(
+                        errorText: _emailErrorText,
+                      ),
+                      onChanged: (_) {
+                        setState(() {
+                          _emailErrorText = null;
+                        });
+                      },
                       validator: (value) {
                         if (value == null || value.isEmpty) return '이메일을 입력해주세요.';
                         final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');

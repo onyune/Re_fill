@@ -9,16 +9,26 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   bool isAuto = false;
-  final Color mainBlue = const Color(0xFF2563EB);
+
+  final Color mainBlue = Color(0xFF2563EB);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('발주'),
-        backgroundColor: mainBlue,
-        foregroundColor: Colors.white,
+        title: const Text(
+          '발주',
+          style: TextStyle(
+            color: Color(0xFF2563EB), // mainBlue 직접 넣기
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        backgroundColor: Colors.transparent, // 파란색 띠 제거
+        elevation: 0, // 그림자 제거
+        centerTitle: false, // 왼쪽 정렬
+        iconTheme: const IconThemeData(color: Color(0xFF2563EB)), // 아이콘도 파란색
       ),
       body: SafeArea(
         child: Padding(
@@ -41,33 +51,38 @@ class _OrderScreenState extends State<OrderScreen> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 24),
 
-              // 수동/자동 발주 전환 버튼
-              ToggleButtons(
-                isSelected: [!isAuto, isAuto],
-                onPressed: (index) {
-                  setState(() {
-                    isAuto = index == 1;
-                  });
-                },
-                borderRadius: BorderRadius.circular(10),
-                selectedColor: Colors.white,
-                fillColor: mainBlue,
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 60),
-                    child: Text('수동 발주'),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 60),
-                    child: Text('자동 발주'),
-                  ),
-                ],
+              // 자동/수동 발주 토글
+              Center(
+                child: ToggleButtons(
+                  isSelected: [!isAuto, isAuto],
+                  onPressed: (index) {
+                    setState(() {
+                      isAuto = index == 1;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  selectedColor: Colors.white,
+                  fillColor: mainBlue,
+                  color: mainBlue,
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 60),
+                      child: Text('수동 발주'),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 60),
+                      child: Text('자동 발주'),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
 
-              // 화면 내용
+              const SizedBox(height: 24),
+
+              // 발주 내용
               Expanded(
                 child: isAuto
                     ? const Center(child: Text('자동 발주 화면'))

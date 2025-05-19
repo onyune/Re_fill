@@ -11,33 +11,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool lowStockNotification = true;
   bool darkMode = false;
 
+  final Color mainBlue = const Color(0xFF2563EB);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('설정'),
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
+        title: const Text(
+          '설정',
+          style: TextStyle(
+            color: Color(0xFF2563EB),
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        automaticallyImplyLeading: false,
+        iconTheme: const IconThemeData(color: Color(0xFF2563EB)),
       ),
       backgroundColor: const Color(0xFFFBF7FF),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 사용자 카드
             Container(
               padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFF2563EB)),
+                border: Border.all(color: mainBlue.withOpacity(0.5)),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                  ),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,36 +59,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           '안녕하세요!',
                           style: TextStyle(
                             fontSize: 18,
-                            color: Color(0xFF2563EB),
                             fontWeight: FontWeight.bold,
+                            color: Color(0xFF2563EB),
                           ),
                         ),
                         SizedBox(height: 8),
                         Text(
                           '관리자 ○○○ 님',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF2563EB),
-                          ),
+                          style: TextStyle(fontSize: 16, color: Color(0xFF2563EB)),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  const CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, size: 40, color: Colors.white),
-                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
 
-            const Text(
-              '앱 설정',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            const SizedBox(height: 32),
+
+            // 앱 설정
+            const Text('앱 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('재고 부족 알림 설정'),
@@ -83,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: (value) {
                 setState(() => lowStockNotification = value);
               },
-              activeColor: const Color(0xFF2563EB),
+              activeColor: mainBlue,
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -92,14 +95,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: (value) {
                 setState(() => darkMode = value);
               },
-              activeColor: const Color(0xFF2563EB),
+              activeColor: mainBlue,
             ),
+
             const SizedBox(height: 24),
 
-            const Text(
-              '매장 설정',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            // 매장 설정
+            const Text('매장 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('매장 변경'),
@@ -112,12 +114,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {},
             ),
+
             const SizedBox(height: 24),
 
-            const Text(
-              '개인/보안',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            // 개인/보안
+            const Text('개인/보안', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('비밀번호 변경'),
@@ -128,6 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('계정 탈퇴'),
               onTap: () {},
             ),
+
             const SizedBox(height: 24),
 
             // 로그아웃

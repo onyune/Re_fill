@@ -40,6 +40,14 @@ dependencies:
   firebase_auth: ^4.20.0
   google_sign_in: ^6.1.4
   firebase_database: ^10.4.5
+<<<<<<< HEAD
+=======
+  cloud_firestore: ^4.8.2
+  firebase_messaging: ^14.6.5
+  geolocator: ^10.1.0 #위치가져오기
+  http: ^0.13.5 #날씨 API 호출
+
+>>>>>>> sub_main
 dev_dependencies:
   flutter_test:
     sdk: flutter
