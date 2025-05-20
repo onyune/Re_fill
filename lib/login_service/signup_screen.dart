@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'first_screen.dart';
-import 'store_entry_screen.dart';
+import 'package:flutter/material.dart';
+import '../main_navigation.dart';
 import 'package:refill/login_service/login_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:refill/colors.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -22,7 +21,11 @@ class _SignupScreenState extends State<SignupScreen> {
   final _idController = TextEditingController();
 
   bool _isIdChecked = false;
-  String? _emailErrorText;
+  String? _idMessage;
+  Color? _idMessageColor;
+  Color? _idBorderColor;
+
+  bool _isEmailDuplicate = false;
 
   void _showSnackBar(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
@@ -31,7 +34,11 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _checkIdDuplication() async {
     final inputId = _idController.text.trim();
     if (inputId.isEmpty) {
-      _showSnackBar('ID를 입력해주세요.');
+      setState(() {
+        _idMessage = 'ID를 입력해주세요.';
+        _idMessageColor = AppColors.error;
+        _idBorderColor = AppColors.error;
+      });
       return;
     }
 
@@ -43,14 +50,24 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (query.docs.isEmpty) {
         setState(() {
+          _idMessage = '사용 가능한 ID입니다.';
+          _idMessageColor = AppColors.primary;
+          _idBorderColor = AppColors.primary;
           _isIdChecked = true;
         });
-        _showSnackBar('사용 가능한 ID입니다.');
       } else {
-        _showSnackBar('이미 사용 중인 ID입니다.');
+        setState(() {
+          _idMessage = '이미 사용 중인 ID입니다.';
+          _idMessageColor = AppColors.error;
+          _idBorderColor = AppColors.error;
+          _isIdChecked = false;
+        });
       }
     } catch (e) {
-      _showSnackBar('중복 확인 중 오류 발생');
+      setState(() {
+        _idMessage = '중복 확인 중 오류 발생';
+        _idMessageColor = AppColors.error;
+      });
       print(e);
     }
   }
@@ -66,58 +83,53 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _signUp() async {
-    if (!_formKey.currentState!.validate()) return;
+    final isValid = _formKey.currentState!.validate();
+    if (!isValid) return;
 
+    // ID 중복 확인 여부 확인
     if (!_isIdChecked) {
       _showSnackBar('ID 중복 확인을 해주세요.');
       return;
     }
 
+    // 이메일 중복 확인 (validator에서 쓸 수 없으므로 여기서 처리)
+    final isDuplicateEmail = await isEmailDuplicated(_emailController.text.trim());
+    if (isDuplicateEmail) {
+      setState(() => _isEmailDuplicate = true);
+      _formKey.currentState!.validate(); // 다시 에러 반영
+      return;
+    }
+
+    // 비밀번호 확인
     if (_passwordController.text != _checkPasswordController.text) {
       _showSnackBar('비밀번호가 일치하지 않습니다.');
       return;
     }
 
-    final isDuplicateEmail = await isEmailDuplicated(_emailController.text.trim());
-    if (isDuplicateEmail) {
-      setState(() {
-        _emailErrorText = '이미 등록된 이메일입니다.';
-      });
-      return;
-    } else {
-      setState(() {
-        _emailErrorText = null;
-      });
-    }
-
+    // 회원가입 진행
     try {
       final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      final uid = userCredential.user!.uid;
-
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'uid': uid,
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
         'userId': _idController.text.trim(),
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
         'createdAt': Timestamp.now(),
-        'hasStore': false,
       });
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const FirstScreen()), // 또는 LoginScreen()
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
-        setState(() {
-          _emailErrorText = '이미 등록된 이메일입니다.';
-        });
+        setState(() => _isEmailDuplicate = true);
+        _formKey.currentState!.validate(); // 에러 메시지 반영
       } else {
-        _showSnackBar('회원가입 실패: ${e.message}');
+        debugPrint('회원가입 실패: ${e.message}');
       }
     }
   }
@@ -126,23 +138,33 @@ class _SignupScreenState extends State<SignupScreen> {
     return InputDecoration(
       labelText: label,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-      focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: AppColors.borderDefault, width: 2),
         borderRadius: BorderRadius.circular(20),
       ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: AppColors.primary, width: 2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      errorBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: AppColors.error, width: 2),
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+      ),
+      focusedErrorBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: AppColors.error, width: 2),
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+      ),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      errorStyle: const TextStyle(color: Colors.red, fontSize: 13),
+      errorStyle: const TextStyle(color: AppColors.error, fontSize: 13),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        automaticallyImplyLeading: true,
-      ),
-      backgroundColor: const Color(0xFFFBF7FF),
+      appBar: AppBar(elevation: 0, automaticallyImplyLeading: true),
+      backgroundColor: AppColors.background,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(30, 20, 30, 0),
         child: SingleChildScrollView(
@@ -155,7 +177,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2563EB),
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -171,45 +193,98 @@ class _SignupScreenState extends State<SignupScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _idController,
-                            decoration: _buildInputDecoration('ID'),
-                            validator: (value) => value == null || value.isEmpty ? 'ID를 입력해주세요.' : null,
+                            decoration: InputDecoration(
+                              labelText: 'ID',
+                              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: _idBorderColor ?? AppColors.borderDefault, width: 2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: _idBorderColor ?? AppColors.primary, width: 2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              errorBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(color: AppColors.error, width: 2),
+                                borderRadius: BorderRadius.all(Radius.circular(20)),
+                              ),
+                              focusedErrorBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(color: AppColors.error, width: 2),
+                                borderRadius: BorderRadius.all(Radius.circular(20)),
+                              ),
+                              errorStyle: const TextStyle(color: AppColors.error, fontSize: 13),
+                            ),
+                            onChanged: (_) {
+                              setState(() {
+                                _idMessage = null;
+                                _idBorderColor = null;
+                                _isIdChecked = false;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ID를 입력해주세요.';
+                              }
+                              if (value.contains(' ')) {
+                                setState(() {
+                                  _idMessage = null;
+                                });
+                                return '공백 없이 입력해주세요.';
+                              }
+                              return null;
+                            },
                           ),
                         ),
                         const SizedBox(width: 10),
                         ElevatedButton(
                           onPressed: _checkIdDuplication,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
+                            backgroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),
-                          child: const Text('중복확인', style: TextStyle(color: Colors.white)),
+                          child: const Text('중복확인', style: TextStyle(color: AppColors.background)),
                         ),
                       ],
                     ),
+                    if (_idMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+                        child: Text(
+                          _idMessage!,
+                          style: TextStyle(
+                            color: _idMessageColor ?? Colors.black,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _nameController,
                       decoration: _buildInputDecoration('이름'),
-                      validator: (v) => v == null || v.isEmpty ? '이름을 입력해주세요.' : null,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return '이름을 입력해주세요.';
+                        if (value.contains(' ')) return '공백 없이 입력해주세요.';
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
-                      decoration: _buildInputDecoration('이메일').copyWith(
-                        errorText: _emailErrorText,
-                      ),
+                      decoration: _buildInputDecoration('이메일'),
                       onChanged: (_) {
                         setState(() {
-                          _emailErrorText = null;
+                          _isEmailDuplicate = false;
                         });
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) return '이메일을 입력해주세요.';
                         final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
                         if (!emailRegex.hasMatch(value)) return '올바른 이메일 형식이 아닙니다.';
+                        if (_isEmailDuplicate) return '이미 등록된 이메일입니다.';
                         return null;
                       },
                     ),
@@ -237,14 +312,14 @@ class _SignupScreenState extends State<SignupScreen> {
                       onPressed: _signUp,
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 56),
-                        backgroundColor: const Color(0xFF2563EB),
+                        backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
                       child: const Text(
                         '회원가입',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                        style: TextStyle(color: AppColors.background, fontSize: 16),
                       ),
                     ),
                   ],
