@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:refill/colors.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -10,25 +9,26 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   bool isAuto = false;
-  final Color mainBlue = AppColors.primary;
+
+  final Color mainBlue = Color(0xFF2563EB);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           '발주',
           style: TextStyle(
-            color: AppColors.primary,
+            color: Color(0xFF2563EB), // mainBlue 직접 넣기
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
-        backgroundColor: Colors.transparent, // 파란 배경 제거
-        elevation: 0,
-        centerTitle: false,
-        iconTheme: const IconThemeData(color: AppColors.primary),
+        backgroundColor: Colors.transparent, // 파란색 띠 제거
+        elevation: 0, // 그림자 제거
+        centerTitle: false, // 왼쪽 정렬
+        iconTheme: const IconThemeData(color: Color(0xFF2563EB)), // 아이콘도 파란색
       ),
       body: SafeArea(
         child: Padding(
@@ -36,6 +36,7 @@ class _OrderScreenState extends State<OrderScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 검색창
               TextField(
                 decoration: InputDecoration(
                   hintText: '검색',
@@ -50,8 +51,10 @@ class _OrderScreenState extends State<OrderScreen> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 24),
 
+              // 자동/수동 발주 토글
               Center(
                 child: ToggleButtons(
                   isSelected: [!isAuto, isAuto],
@@ -61,7 +64,7 @@ class _OrderScreenState extends State<OrderScreen> {
                     });
                   },
                   borderRadius: BorderRadius.circular(10),
-                  selectedColor: AppColors.background,
+                  selectedColor: Colors.white,
                   fillColor: mainBlue,
                   color: mainBlue,
                   children: const [
@@ -79,6 +82,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
               const SizedBox(height: 24),
 
+              // 발주 내용
               Expanded(
                 child: isAuto
                     ? const Center(child: Text('자동 발주 화면'))

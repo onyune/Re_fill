@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-
-import 'package:refill/colors.dart';
 import 'home_service/home_screen.dart';
 import 'order_service/order_screen.dart';
-import 'chat_service/chat_screen.dart';
+import 'chat_service/chat_screen.dart'; // 오타 수정됨
 import 'setting_service/settings_screen.dart';
-
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -16,6 +13,7 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
+
   final List<Widget> _screens = const [
     HomeScreen(),
     OrderScreen(),
@@ -26,15 +24,15 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() => _currentIndex = index);
         },
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.borderDefault,
+        selectedItemColor: Color(0xFF2563EB),
+        unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
