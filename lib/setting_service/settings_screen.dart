@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:refill/setting_service/min_stock.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -77,8 +78,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 32),
 
-            // 앱 설정
-            const Text('앱 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            // 재고 설정
+            const Text('재고 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('재고 부족 알림 설정'),
@@ -88,32 +89,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
               activeColor: mainBlue,
             ),
-            SwitchListTile(
+            ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('다크 모드'),
-              value: darkMode,
-              onChanged: (value) {
-                setState(() => darkMode = value);
-              },
-              activeColor: mainBlue,
+              title: const Text('재고 최소 수량 설정'),
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MinStockListPage()),
+                );},
             ),
+            Divider(thickness: 0.8, color: Colors.grey.shade300),
 
             const SizedBox(height: 24),
+
 
             // 매장 설정
             const Text('매장 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('매장 변경'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {},
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('팀 관리'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {},
             ),
+            Divider(thickness: 0.8, color: Colors.grey.shade300),
+
 
             const SizedBox(height: 24),
 
@@ -129,6 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('계정 탈퇴'),
               onTap: () {},
             ),
+            Divider(thickness: 0.8, color: Colors.grey.shade300),
 
             const SizedBox(height: 24),
 

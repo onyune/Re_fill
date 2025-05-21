@@ -1,95 +1,165 @@
 import 'package:flutter/material.dart';
 
+const Color mainBlue = Color(0xFF2563EB);
+
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
 
   @override
-  State<OrderScreen> createState() => _OrderScreenState();
+  State<OrderScreen> createState() => _OrderScreen();
 }
 
-class _OrderScreenState extends State<OrderScreen> {
-  bool isAuto = false;
+class _OrderScreen extends State<OrderScreen> {
+  final List<Map<String, dynamic>> items = [];
 
-  final Color mainBlue = Color(0xFF2563EB);
+  void _addItem(String name) {
+    setState(() {
+      items.add({'name': name, 'stock': 0, 'count': 1});
+    });
+  }
+
+  void _showAddItemDialog() {
+    final TextEditingController _controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('새 품목 추가'),
+          content: TextField(
+            controller: _controller,
+            decoration: const InputDecoration(hintText: '품목명을 입력하세요'),
+            autofocus: true,
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: mainBlue),
+              onPressed: () {
+                final name = _controller.text.trim();
+                if (name.isNotEmpty) {
+                  _addItem(name);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('추가',style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _placeOrder() {
+    debugPrint('장바구니: $items');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          '발주',
-          style: TextStyle(
-            color: Color(0xFF2563EB), // mainBlue 직접 넣기
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        backgroundColor: Colors.transparent, // 파란색 띠 제거
-        elevation: 0, // 그림자 제거
-        centerTitle: false, // 왼쪽 정렬
-        iconTheme: const IconThemeData(color: Color(0xFF2563EB)), // 아이콘도 파란색
+          title: const Text('발주'),
+          backgroundColor: mainBlue,
+          foregroundColor: Colors.white,
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 검색창
-              TextField(
-                decoration: InputDecoration(
-                  hintText: '검색',
-                  prefixIcon: Icon(Icons.search, color: mainBlue),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: mainBlue, width: 2),
-                    borderRadius: BorderRadius.circular(12),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(
+          children: [
+            // 검색창
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: mainBlue),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.search, color: mainBlue),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: '검색',
+                      ),
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: mainBlue),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // 항목 리스트
+            Expanded(
+              child: ListView.separated(
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const Divider(),
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text('현재재고 ${item['stock']}'),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove, color: mainBlue),
+                            onPressed: () {
+                              setState(() {
+                                if (item['count'] > 0) item['count']--;
+                              });
+                            },
+                          ),
+                          Text('${item['count']}', style: const TextStyle(fontSize: 16)),
+                          IconButton(
+                            icon: const Icon(Icons.add, color: mainBlue),
+                            onPressed: () {
+                              setState(() {
+                                item['count']++;
+                              });
+                            },
+                          ),
+                        ],
+                      )
+                    ],
+                  );
+                },
+              ),
+            ),
+
+            // 리스트 추가 버튼
+            GestureDetector(
+              onTap: _showAddItemDialog,
+              child: const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '+ 리스트 추가',
+                  style: TextStyle(color: mainBlue, fontSize: 16),
                 ),
               ),
+            ),
 
-              const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-              // 자동/수동 발주 토글
-              Center(
-                child: ToggleButtons(
-                  isSelected: [!isAuto, isAuto],
-                  onPressed: (index) {
-                    setState(() {
-                      isAuto = index == 1;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  selectedColor: Colors.white,
-                  fillColor: mainBlue,
-                  color: mainBlue,
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 60),
-                      child: Text('수동 발주'),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 60),
-                      child: Text('자동 발주'),
-                    ),
-                  ],
-                ),
+            // 발주 버튼
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: mainBlue),
+                onPressed: _placeOrder,
+                child: const Text('발주하기', style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
-
-              const SizedBox(height: 24),
-
-              // 발주 내용
-              Expanded(
-                child: isAuto
-                    ? const Center(child: Text('자동 발주 화면'))
-                    : const Center(child: Text('수동 발주 화면')),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
