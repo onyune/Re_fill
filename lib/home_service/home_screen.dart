@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:refill/home_service/weather_box.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? storeName;
   bool isLoading = true;
-  static const mainBlue = Color(0xFF2563EB); // Re:fill 주색
+  static const mainBlue = AppColors.primary;
 
   @override
   void initState() {
@@ -54,11 +56,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("홈"),
         backgroundColor: mainBlue,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
       ),
       body: SafeArea(
         child: Padding(
@@ -130,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.all(20),
                   margin: const EdgeInsets.only(top: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: mainBlue),
                   ),
@@ -153,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           label: const Text('발주에 추가'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: mainBlue,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.background,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'store_create_screen.dart';
 import 'invite_code_screen.dart';
+import 'package:refill/colors.dart';
 
 
 class StoreEntryScreen extends StatelessWidget {
@@ -9,7 +11,7 @@ class StoreEntryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF7FF),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -21,7 +23,7 @@ class StoreEntryScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -31,7 +33,7 @@ class StoreEntryScreen extends StatelessWidget {
                     fontSize: 25,
                     height: 1.4,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2563EB),
+                    color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 32),
@@ -42,7 +44,7 @@ class StoreEntryScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Color(0xFF2563EB)),
+                    border: Border.all(color: AppColors.primary),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -60,8 +62,8 @@ class StoreEntryScreen extends StatelessWidget {
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStatePropertyAll(Color(0xFF2563EB)),
-                          foregroundColor: WidgetStatePropertyAll(Colors.white),
+                          backgroundColor: WidgetStatePropertyAll(AppColors.primary),
+                          foregroundColor: WidgetStatePropertyAll(AppColors.background),
                           textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 16)),
                         ),
                         child: Text('+새로운 매장 생성'),
@@ -79,7 +81,7 @@ class StoreEntryScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Color(0xFF2563EB)),
+                    border: Border.all(color: AppColors.primary),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -97,8 +99,8 @@ class StoreEntryScreen extends StatelessWidget {
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStatePropertyAll(Color(0xFF2563EB)),
-                          foregroundColor: WidgetStatePropertyAll(Colors.white),
+                          backgroundColor: WidgetStatePropertyAll(AppColors.primary),
+                          foregroundColor: WidgetStatePropertyAll(AppColors.background),
                           textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 16)),
                         ),
                         child: Text('+초대 코드 입력'),

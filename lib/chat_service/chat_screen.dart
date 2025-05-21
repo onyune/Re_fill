@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -79,16 +81,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const mainBlue = Color(0xFF2563EB);
+    const mainBlue = AppColors.primary;
     final currentUser = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           '채팅',
           style: TextStyle(
-            color: Color(0xFF2563EB), // mainBlue 직접 넣기
+            color: AppColors.primary, // mainBlue 직접 넣기
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -96,7 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: Colors.transparent, // 파란색 띠 제거
         elevation: 0, // 그림자 제거
         centerTitle: false, // 왼쪽 정렬
-        iconTheme: const IconThemeData(color: Color(0xFF2563EB)), // 아이콘도 파란색
+        iconTheme: const IconThemeData(color: AppColors.primary), // 아이콘도 파란색
       ),
       body: Column(
         children: [
@@ -155,7 +157,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   return const Center(
                     child: Text(
                       '아직 메시지가 없습니다.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(fontSize: 16, color: AppColors.borderDefault),
                     ),
                   );
                 }
@@ -213,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     decoration: InputDecoration(
                       hintText: '메시지를 입력하세요',
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: AppColors.background,
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 10),
                       border: OutlineInputBorder(

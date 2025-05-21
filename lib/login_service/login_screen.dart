@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+
 import 'package:refill/login_service/find_id_screen.dart';
 import 'package:refill/login_service/signup_screen.dart';
 import 'package:refill/login_service/find_password_screen.dart';
 import 'package:refill/login_service/first_screen.dart';
 import 'package:refill/main_navigation.dart';
 import 'package:refill/google_auth_service/auth_service.dart';    // 구글 계정 로그인 관련 함수 파일 import
+
 import 'package:refill/colors.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 
 
 class LoginScreen extends StatefulWidget {

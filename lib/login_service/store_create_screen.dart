@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../home_service/home_screen.dart';
+import 'package:refill/colors.dart';
+
 
 class StoreCreateScreen extends StatelessWidget {
   const StoreCreateScreen({super.key});
@@ -10,10 +13,10 @@ class StoreCreateScreen extends StatelessWidget {
     final TextEditingController addressController = TextEditingController();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         foregroundColor: Colors.black,
       ),
       body: Padding(
@@ -26,7 +29,7 @@ class StoreCreateScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF2563EB),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 8),
@@ -35,7 +38,7 @@ class StoreCreateScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 25,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF2563EB),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 32),
@@ -44,20 +47,20 @@ class StoreCreateScreen extends StatelessWidget {
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Color(0xFF2563EB),
+                  color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 6),
             TextFormField(
               decoration: InputDecoration(
                 hintText: '매장 이름을 입력하세요.',
-                hintStyle: const TextStyle(color:  Colors.grey),
+                hintStyle: const TextStyle(color: AppColors.borderDefault),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF2563EB)),
+                  borderSide: const BorderSide(color: AppColors.primary),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -69,7 +72,7 @@ class StoreCreateScreen extends StatelessWidget {
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Color(0xFF2563EB),
+                  color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 6),
@@ -80,11 +83,11 @@ class StoreCreateScreen extends StatelessWidget {
                     decoration: InputDecoration(
                       hintText: '',
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Color(0xFF2563EB)),
+                        borderSide: const BorderSide(color: AppColors.primary),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -98,7 +101,7 @@ class StoreCreateScreen extends StatelessWidget {
 
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
+                    backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(
                       vertical: 16,
                       horizontal: 20,
@@ -109,7 +112,7 @@ class StoreCreateScreen extends StatelessWidget {
                   ),
                   child: const Text(
                     '검색',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: AppColors.background),
                   ),
                 )
               ],
@@ -126,7 +129,7 @@ class StoreCreateScreen extends StatelessWidget {
                     );
                     },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
