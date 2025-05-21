@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:refill/login_service/find_id_screen.dart';
 import 'package:refill/login_service/signup_screen.dart';
 import 'package:refill/login_service/find_password_screen.dart';
+import 'package:refill/login_service/first_screen.dart';
 import 'package:refill/main_navigation.dart';
 import 'package:refill/google_auth_service/auth_service.dart';    // 구글 계정 로그인 관련 함수 파일 import
 import 'package:refill/colors.dart';
@@ -59,10 +60,37 @@ class _LoginScreenState extends State<LoginScreen> {
         password: password,
       );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
-      );
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (!userDoc.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("사용자 정보가 존재하지 않습니다.")),
+        );
+        return;
+      }
+
+      final userData = userDoc.data();
+      final storeId = userData?['storeId'];
+
+      if (storeId == null || storeId.isEmpty) {
+        // 매장 미소속 → FirstScreen으로
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const FirstScreen()),
+        );
+      } else {
+        // 매장 소속 → MainNavigation으로
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainNavigation()),
+        );
+      }
+
     } on FirebaseAuthException catch (e) {
       if (e.code == 'wrong-password') {
         _setError("비밀번호가 틀렸습니다.");
@@ -204,10 +232,41 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () async {
                     final userCredential = await AuthService.signInWithGoogle();
                     if (userCredential != null) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const MainNavigation()),
-                      );
+                      final uid = userCredential.user?.uid;
+
+                      if (uid == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("로그인 정보가 올바르지 않습니다.")),
+                        );
+                        return;
+                      }
+
+                      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+                      if (!userDoc.exists) {
+                        // 처음 로그인한 구글 사용자 → 사용자 문서 생성
+                        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+                          'email': userCredential.user!.email,
+                          'name': userCredential.user!.displayName ?? '',
+                          'storeId': '',
+                          'role': 'employee',
+                          'createdAt': FieldValue.serverTimestamp(),
+                        });
+                      }
+                      final refreshedDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+                      final userData = refreshedDoc.data();
+                      final storeId = userData?['storeId'];
+
+                      if (storeId == null || storeId.isEmpty) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const FirstScreen()),
+                        );
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const MainNavigation()),
+                        );
+                      }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Google 로그인 실패")),

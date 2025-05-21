@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/colors.dart';
 import '../main_navigation.dart';
 
 class CreateStoreScreen extends StatelessWidget {
@@ -47,25 +48,34 @@ class CreateStoreScreen extends StatelessWidget {
                     return;
                   }
 
-                  await FirebaseFirestore.instance.collection('stores').add({
+                  // 매장 생성하고 DocumentReference 받아오기
+                  final storeRef = await FirebaseFirestore.instance.collection('stores').add({
                     'storeName': storeName,
                     'address': address,
                     'ownerUid': uid,
                     'createdAt': Timestamp.now(),
+                    'members': [], // 직원 목록은 비어 있음
+                    // 나중에 사용 -- 'inviteCode': generateInviteCode(), // 랜덤 초대코드
+                    // 나중에 사용 -- 'autoOrderEnabled': false,
+                    'storeType': '카페',
                   });
 
+                  // 사용자 문서에 storeId와 role도 저장
                   await FirebaseFirestore.instance.collection('users').doc(uid).update({
-                    'hasStore': true,
+                    'storeId': storeRef.id,
+                    'role': 'owner', // 점주
+                    'createdAt': FieldValue.serverTimestamp(),
                   });
 
+                  // 3. 메인 화면으로 이동
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const MainNavigation()),
                         (route) => false,
                   );
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF2563EB)),
-                child: const Text('생성'),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                child: const Text('생성', style: TextStyle(color: AppColors.background)),
               )
             ],
           ),
