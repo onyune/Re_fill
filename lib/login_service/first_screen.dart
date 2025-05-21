@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 import 'create_store_screen.dart';
 
 class FirstScreen extends StatelessWidget {
@@ -7,7 +8,7 @@ class FirstScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -17,10 +18,12 @@ class FirstScreen extends StatelessWidget {
               const SizedBox(height: 60),
               const Text(
                 'Re:fill',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary),
               ),
               const SizedBox(height: 8),
-              const Text('자동 발주, 똑똑한 재고 관리의 시작', style: TextStyle(fontSize: 18)),
+              const Text(
+                  '자동 발주, 똑똑한 재고 관리의 시작',
+                  style: TextStyle(fontSize: 18)),
               const Spacer(),
               Center(
                 child: ElevatedButton(
@@ -32,10 +35,12 @@ class FirstScreen extends StatelessWidget {
                     // 매장 생성 화면으로 이동
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF2563EB),
+                    backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   ),
-                  child: const Text('＋ 새로운 매장 생성', style: TextStyle(fontSize: 16)),
+                  child: const Text(
+                      '＋ 새로운 매장 생성',
+                      style: TextStyle(fontSize: 16, color: AppColors.background)),
                 ),
               ),
               const SizedBox(height: 80),
