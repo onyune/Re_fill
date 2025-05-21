@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:refill/colors.dart';
+
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -18,7 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text(
           '설정',
           style: TextStyle(
-            color: Color(0xFF2563EB),
+            color: AppColors.primary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -26,9 +29,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: Color(0xFF2563EB)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
-      backgroundColor: const Color(0xFFFBF7FF),
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -38,15 +41,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border.all(color: Color(0xFF2563EB)),
+                border: Border.all(color: AppColors.primary),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
                   const CircleAvatar(
                     radius: 30,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                    backgroundColor: AppColors.background,
+                    child: Icon(Icons.person, size: 40, color: AppColors.background),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -57,7 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           '안녕하세요!',
                           style: TextStyle(
                             fontSize: 18,
-                            color: Color(0xFF2563EB),
+                            color: AppColors.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -66,7 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           '관리자 ○○○ 님',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2563EB),
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
@@ -84,14 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('재고 부족 알림 설정'),
               value: lowStockNotification,
               onChanged: (value) => setState(() => lowStockNotification = value),
-              activeColor: const Color(0xFF2563EB),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('다크 모드'),
-              value: darkMode,
-              onChanged: (value) => setState(() => darkMode = value),
-              activeColor: const Color(0xFF2563EB),
+              activeColor: AppColors.primary,
             ),
             const SizedBox(height: 24),
 
@@ -134,7 +130,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: const Text(
                   '로그아웃',
                   style: TextStyle(
-                    color: Colors.grey,
+                    color: AppColors.borderDefault,
                     decoration: TextDecoration.underline,
                     fontSize: 14,
                   ),

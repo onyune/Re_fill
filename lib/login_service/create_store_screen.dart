@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:refill/colors.dart';
 import '../main_navigation.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class CreateStoreScreen extends StatelessWidget {
   const CreateStoreScreen({super.key});
@@ -15,7 +18,7 @@ class CreateStoreScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('새로운 매장 생성'),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         foregroundColor: Colors.black,
       ),
       resizeToAvoidBottomInset: true, // 키보드 때문에 밀림 방지
@@ -67,7 +70,7 @@ class CreateStoreScreen extends StatelessWidget {
                     'createdAt': FieldValue.serverTimestamp(),
                   });
 
-                  // 3. 메인 화면으로 이동
+                  // 메인 화면으로 이동
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const MainNavigation()),

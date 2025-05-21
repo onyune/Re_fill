@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+
+import 'package:refill/colors.dart';
+
 import '../home_service/home_screen.dart';
+
 
 class InviteCodeScreen extends StatelessWidget {
   const InviteCodeScreen({super.key});
@@ -8,7 +12,7 @@ class InviteCodeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final inviteCodeController = TextEditingController();
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF7FF),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -24,7 +28,7 @@ class InviteCodeScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF2563EB),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 12),
@@ -33,7 +37,7 @@ class InviteCodeScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 25,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF2563EB),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 32),
@@ -42,7 +46,7 @@ class InviteCodeScreen extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: Color(0xFF2563EB),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 8),
@@ -50,13 +54,13 @@ class InviteCodeScreen extends StatelessWidget {
               controller: inviteCodeController,
               decoration: InputDecoration(
                 hintText: '초대 코드를 입력하세요.',
-                hintStyle: const TextStyle(color:  Colors.grey),
+                hintStyle: const TextStyle(color: AppColors.borderDefault),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF2563EB)),
+                  borderSide: const BorderSide(color: AppColors.primary),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -75,7 +79,7 @@ class InviteCodeScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -84,7 +88,7 @@ class InviteCodeScreen extends StatelessWidget {
                   '지점 등록하기',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.white,
+                    color: AppColors.background,
                   ),
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -9,17 +10,17 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   bool isAuto = false;
-  final Color mainBlue = const Color(0xFF2563EB);
+  final Color mainBlue = AppColors.primary;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           '발주',
           style: TextStyle(
-            color: Color(0xFF2563EB), // 메인블루 직접 지정
+            color: AppColors.primary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -27,7 +28,7 @@ class _OrderScreenState extends State<OrderScreen> {
         backgroundColor: Colors.transparent, // 파란 배경 제거
         elevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: Color(0xFF2563EB)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: SafeArea(
         child: Padding(
@@ -60,7 +61,7 @@ class _OrderScreenState extends State<OrderScreen> {
                     });
                   },
                   borderRadius: BorderRadius.circular(10),
-                  selectedColor: Colors.white,
+                  selectedColor: AppColors.background,
                   fillColor: mainBlue,
                   color: mainBlue,
                   children: const [
