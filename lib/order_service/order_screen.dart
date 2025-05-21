@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+//현재재고 어디에 넣어야하지
 
 const Color mainBlue = Color(0xFF2563EB);
 
@@ -132,6 +133,7 @@ class _OrderScreen extends State<OrderScreen> {
                     ],
                   );
                 },
+
               ),
             ),
 

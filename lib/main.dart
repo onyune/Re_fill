@@ -1,7 +1,7 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
 import 'splash_screen.dart';
 import 'login_service/login_screen.dart';
 import 'main_navigation.dart';

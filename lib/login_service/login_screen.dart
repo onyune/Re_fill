@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
-               const SizedBox(height: 5),
+                const SizedBox(height: 5),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

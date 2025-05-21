@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:refill/setting_service/min_stock.dart';
 
+//다음에 할 거 회원정보수정 회원탈퇴시 팝업창 로그아웃후 첫화면 등
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -42,6 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 border: Border.all(color: mainBlue.withOpacity(0.5)),
+
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -75,7 +78,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 32),
 
             // 재고 설정
