@@ -35,9 +35,14 @@ class _FindIdScreenState extends State<FindIdScreen> {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        setState(() {
-          _foundUserId = snapshot.docs.first['userId'];
-        });
+        final data = snapshot.docs.first.data();
+        if (data.containsKey('userId')) {
+          setState(() {
+            _foundUserId = data['userId'];
+          });
+        } else {
+          _showSnackBar("구글 연동 계정입니다. 아이디 조회가 불가능합니다.");
+        }
       } else {
         _showSnackBar("해당 이메일로 등록된 아이디를 찾을 수 없습니다.");
       }
