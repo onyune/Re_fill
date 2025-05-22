@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/setting_service/team_management_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -181,7 +182,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: const Text('팀 관리'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  // 이동 처리
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TeamManagementScreen()),
+                  );
                 },
               ),
             ],
