@@ -5,9 +5,22 @@ import 'package:refill/colors.dart';
 import '../home_service/home_screen.dart';
 
 
-class InviteCodeScreen extends StatelessWidget {
+class InviteCodeScreen extends StatefulWidget {
   const InviteCodeScreen({super.key});
 
+  @override
+  State<InviteCodeScreen> createState() => _InviteCodeScreenState();
+
+
+}
+class _InviteCodeScreenState extends State<InviteCodeScreen> {
+  final inviteCodeController = TextEditingController();
+
+  @override
+  void dispose(){
+    inviteCodeController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     final inviteCodeController = TextEditingController();
