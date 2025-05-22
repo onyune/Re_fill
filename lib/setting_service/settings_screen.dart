@@ -1,7 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-
 import 'package:refill/colors.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,7 +13,68 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool lowStockNotification = true;
-  bool darkMode = false;
+  String userName = '';
+  String role = '';
+  String inviteCode = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      final data = userDoc.data()!;
+      setState(() {
+        userName = data['name'] ?? '이름 없음';
+        role = data['role'] == 'owner' ? '관리자' : '직원';
+      });
+    }
+
+    // 관리자인 경우 초대코드 불러오기
+    if (role == '관리자') {
+      final storeId = userDoc.data()?['storeId'];
+      if (storeId != null) {
+        final storeDoc = await FirebaseFirestore.instance.collection('stores').doc(storeId).get();
+        if (storeDoc.exists) {
+          final storeData = storeDoc.data();
+          setState(() {
+            inviteCode = storeData?['inviteCode'] ?? '';
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _generateInviteCode() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final storeId = userDoc.data()?['storeId'];
+
+    if (storeId == null) return;
+
+    final newCode = _randomCode();
+    await FirebaseFirestore.instance.collection('stores').doc(storeId).update({
+      'inviteCode': newCode,
+    });
+
+    setState(() {
+      inviteCode = newCode;
+    });
+  }
+
+  String _randomCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random();
+    return List.generate(6, (index) => chars[rand.nextInt(chars.length)]).join();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,14 +111,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const CircleAvatar(
                     radius: 30,
                     backgroundColor: AppColors.background,
-                    child: Icon(Icons.person, size: 40, color: AppColors.background),
+                    child: Icon(Icons.person, size: 40, color: AppColors.primary),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           '안녕하세요!',
                           style: TextStyle(
                             fontSize: 18,
@@ -64,10 +126,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
-                          '관리자 ○○○ 님',
-                          style: TextStyle(
+                          '$role $userName 님',
+                          style: const TextStyle(
                             fontSize: 16,
                             color: AppColors.primary,
                           ),
@@ -80,7 +142,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 앱 설정
+            // 초대 코드 생성 (관리자만 표시)
+            if (role == '관리자') ...[
+              const Text('팀 초대', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: _generateInviteCode,
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                child: const Text('초대코드 생성', style: TextStyle(color: Colors.white)),
+              ),
+              if (inviteCode.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('초대코드: $inviteCode'),
+              ],
+              const SizedBox(height: 24),
+            ],
+
             const Text('앱 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -91,7 +168,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 매장 설정
             const Text('매장 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -99,15 +175,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {},
             ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('팀 관리'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {},
-            ),
+            if (role == '관리자') ...[
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('팀 관리'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  // 이동 처리
+                },
+              ),
+            ],
             const SizedBox(height: 24),
 
-            // 개인/보안
             const Text('개인/보안', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -121,7 +200,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 로그아웃
             Center(
               child: TextButton(
                 onPressed: () {

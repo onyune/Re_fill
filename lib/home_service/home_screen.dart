@@ -28,20 +28,26 @@ class _HomeScreenState extends State<HomeScreen> {
     if (uid == null) return;
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('stores')
-          .where('ownerUid', isEqualTo: uid)
-          .limit(1)
-          .get();
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final storeId = userDoc.data()?['storeId'];
 
-      if (snapshot.docs.isNotEmpty) {
+      if (storeId == null) {
         setState(() {
-          storeName = snapshot.docs.first['storeName'];
+          storeName = '매장에 가입되지 않았습니다';
+          isLoading = false;
+        });
+        return;
+      }
+
+      final storeDoc = await FirebaseFirestore.instance.collection('stores').doc(storeId).get();
+      if (storeDoc.exists) {
+        setState(() {
+          storeName = storeDoc.data()?['storeName'] ?? '이름 없는 매장';
           isLoading = false;
         });
       } else {
         setState(() {
-          storeName = '매장을 먼저 생성해주세요';
+          storeName = '매장 정보를 찾을 수 없습니다';
           isLoading = false;
         });
       }
