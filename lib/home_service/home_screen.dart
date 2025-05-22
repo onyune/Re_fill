@@ -1,19 +1,67 @@
 import 'package:flutter/material.dart';
-import 'weather_box.dart';
+import 'package:refill/colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/home_service/weather_box.dart';
 
-class HomeScreen extends StatelessWidget {
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String? storeName;
+  bool isLoading = true;
+  static const mainBlue = AppColors.primary;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStoreName();
+  }
+
+  Future<void> _loadStoreName() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('stores')
+          .where('ownerUid', isEqualTo: uid)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        setState(() {
+          storeName = snapshot.docs.first['storeName'];
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          storeName = '매장을 먼저 생성해주세요';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        storeName = '매장 정보를 불러오는 중 오류';
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    const mainBlue = Color(0xFF2563EB); // Re:fill 주색
-
     return Scaffold(
-
-      backgroundColor: Colors.white,
-
-
-
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text("홈"),
+        backgroundColor: mainBlue,
+        foregroundColor: AppColors.background,
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -21,9 +69,8 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 지점 이름
                 Text(
-                  'OO커피 OO점',
+                  isLoading ? '불러오는 중...' : (storeName ?? '매장명 없음'),
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -32,7 +79,6 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // 검색창
                 TextField(
                   decoration: InputDecoration(
                     hintText: '검색',
@@ -49,22 +95,19 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // 한눈에 보기 (날씨 + 재고 요약)
                 IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                    // 날씨 카드
                       const Expanded(
                         child: WeatherBox(),
                       ),
                       const SizedBox(width: 12),
-                    // 재고 요약 카드
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.background,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: mainBlue),
                           ),
@@ -84,13 +127,12 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // 재고 예측 추천
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   margin: const EdgeInsets.only(top: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: mainBlue),
                   ),
@@ -108,19 +150,18 @@ class HomeScreen extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed:(){},
-
+                          onPressed: () {},
                           icon: const Icon(Icons.add_shopping_cart),
                           label: const Text('발주에 추가'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: mainBlue,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.background,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                          ),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
                         ),
-                      ),
                       ),
                     ],
                   ),
