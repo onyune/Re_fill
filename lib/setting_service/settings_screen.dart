@@ -4,6 +4,8 @@ import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:refill/setting_service/team_management_screen.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -110,6 +112,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
   }
+
+  Future<void> _deleteAccount() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final isGoogleUser = user.providerData.any((info) => info.providerId == 'google.com');
+
+    try {
+      if (isGoogleUser) {
+        // 구글 계정 재인증
+        final googleUser = await GoogleSignIn().signIn();
+        final googleAuth = await googleUser?.authentication;
+
+        if (googleAuth?.accessToken == null || googleAuth?.idToken == null) {
+          throw FirebaseAuthException(code: 'ERROR_MISSING_GOOGLE_CREDENTIALS', message: 'Google 인증 실패');
+        }
+
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth!.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        await user.reauthenticateWithCredential(credential);
+      } else {
+        // 일반 계정은 위에서 했던 것처럼 다이얼로그에서 비밀번호 받아 재인증
+        final TextEditingController passwordController = TextEditingController();
+
+        await showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('비밀번호 확인'),
+            content: TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: '비밀번호를 입력하세요'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('취소'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('확인'),
+              ),
+            ],
+          ),
+        );
+
+        final password = passwordController.text.trim();
+        if (password.isEmpty) return;
+
+        final credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: password,
+        );
+        await user.reauthenticateWithCredential(credential);
+      }
+
+      // users 문서 삭제
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+
+      // 계정 삭제
+      await user.delete();
+
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    } catch (e) {
+      print('계정 삭제 실패: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('계정 삭제에 실패했습니다. 다시 시도해주세요.')),
+      );
+    }
+  }
+
+
 
   String _randomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -244,8 +322,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('계정 탈퇴'),
-              onTap: () {},
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('계정 탈퇴'),
+                    content: const Text('정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('취소'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.pop(context); // AlertDialog 닫고
+                          await _deleteAccount(); // 계정 삭제 실행
+                        },
+                        child: const Text('탈퇴'),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
+
             const SizedBox(height: 24),
 
             Center(
