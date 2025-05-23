@@ -16,7 +16,7 @@ class MinStockListPage extends StatefulWidget {
 
 class _MinStockListPageState extends State<MinStockListPage> {
   final List<StockItem> stockItems = [
-    StockItem(name: '우유', minQuantity: 5) //테스트용으로써봄
+    StockItem(name: '우유', minQuantity: 5) //테스트용으로써봄, 지워도 됨
   ];
 
   @override
@@ -27,8 +27,7 @@ class _MinStockListPageState extends State<MinStockListPage> {
           style: TextStyle(color: Color(0xFF2563EB),
             fontWeight: FontWeight.bold,
             fontSize: 20,
-          ),
-          ),
+          ),),
       ),
       body: ListView.separated(
         itemCount: stockItems.length,
