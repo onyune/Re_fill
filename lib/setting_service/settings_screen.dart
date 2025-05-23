@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:refill/setting_service/min_stock.dart';
+import 'package:refill/setting_service/min_stock.dart'; //재고 최소 수량 설정
+import 'package:refill/setting_service/store_change_page.dart'; //매장 변경
+import 'package:refill/setting_service/team_manage_page.dart'; // 팀원 관리
+
 
 //다음에 할 거 회원정보수정 회원탈퇴시 팝업창 로그아웃후 첫화면 등
 
@@ -43,7 +46,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border.all(color: mainBlue.withOpacity(0.5)),
+                border: Border.all(color: mainBlue.withAlpha((0.5 * 255).toInt())),
+
 
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -110,12 +114,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('매장 변경'),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const StoreChangePage()),
+                );
+              },
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('팀 관리'),
-              onTap: () {},
+              title: const Text('팀원 관리'),
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TeamManagePage()),
+                );
+              },
             ),
             Divider(thickness: 0.8, color: Colors.grey.shade300),
 
