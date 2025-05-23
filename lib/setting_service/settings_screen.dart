@@ -206,9 +206,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             Center(
               child: TextButton(
-                onPressed: () {
-                  // 로그아웃 처리
-                },
+                onPressed: () async{
+                  await FirebaseAuth.instance.signOut();
+                  // 로그인 화면으로 이동
+                  if (!mounted) return;
+                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);                },
                 child: const Text(
                   '로그아웃',
                   style: TextStyle(
