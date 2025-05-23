@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:refill/colors.dart';
-import '../home_service/home_screen.dart';
 import 'package:refill/main_navigation.dart';
+
 class InviteCodeScreen extends StatefulWidget {
   const InviteCodeScreen({super.key});
 
@@ -21,7 +21,8 @@ class _InviteCodeScreenState extends State<InviteCodeScreen> {
   }
 
   Future<void> _joinStore() async {
-    final inputCode = inviteCodeController.text.trim(); // 대소문자 구분 유지
+    //final inputCode = inviteCodeController.text.trim();               // 대소문자 구분 O
+    final inputCode = inviteCodeController.text.trim().toUpperCase();   // 대소문자 구분 X
 
     if (inputCode.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -110,7 +111,7 @@ class _InviteCodeScreenState extends State<InviteCodeScreen> {
             ),
             const SizedBox(height: 8),
             TextFormField(
-              controller: inviteCodeController,
+              textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 hintText: '초대 코드를 입력하세요.',
                 hintStyle: const TextStyle(color: AppColors.borderDefault),
