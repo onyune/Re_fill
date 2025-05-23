@@ -171,9 +171,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         await user.reauthenticateWithCredential(credential);
       }
 
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final userData = userDoc.data();
+      final role = userData?['role'];
+      final storeId = userData?['storeId'];
+
       // users 문서 삭제
       await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+      // owner면 store 문서도 삭제
 
+      if (role == 'owner' && storeId != null) {
+        await FirebaseFirestore.instance.collection('stores').doc(storeId).delete();
+      }
       // 계정 삭제
       await user.delete();
 
