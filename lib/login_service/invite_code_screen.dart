@@ -111,6 +111,7 @@ class _InviteCodeScreenState extends State<InviteCodeScreen> {
             ),
             const SizedBox(height: 8),
             TextFormField(
+              controller: inviteCodeController,
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 hintText: '초대 코드를 입력하세요.',

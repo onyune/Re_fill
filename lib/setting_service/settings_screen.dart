@@ -71,6 +71,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  Future<void> _sendPasswordResetEmail() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final email = user?.email;
+
+    if (email == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인된 사용자 이메일이 없습니다.')),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      showDialog(
+        context: context,
+        barrierDismissible: false, // 배경 클릭으로 닫히지 않게
+        builder: (_) => AlertDialog(
+          title: const Text('비밀번호 변경'),
+          content: const Text('비밀번호 재설정 메일을 보냈습니다.\n이메일을 확인한 후 다시 로그인해주세요.'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context); // 먼저 팝업 닫고
+                await FirebaseAuth.instance.signOut(); // 로그아웃 실행
+                if (!mounted) return;
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+              },
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print('비밀번호 재설정 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('메일 전송에 실패했습니다. 다시 시도해주세요.')),
+      );
+    }
+  }
+
   String _randomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rand = Random();
@@ -79,6 +119,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final isGoogleUser = user?.providerData.any((info) => info.providerId == 'google.com') ?? false;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -192,11 +235,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             const Text('개인/보안', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('비밀번호 변경'),
-              onTap: () {},
-            ),
+            if (!isGoogleUser)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('비밀번호 변경'),
+                onTap: _sendPasswordResetEmail,
+              ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('계정 탈퇴'),
