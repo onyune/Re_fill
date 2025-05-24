@@ -17,7 +17,6 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _ownerId;
   String? _storeId;
 
-  // 🔹 사용자 정보 캐시: uid -> {'name': 전유진, 'role': owner}
   Map<String, Map<String, dynamic>> _userInfoCache = {};
 
   @override
@@ -80,7 +79,7 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {});
     }
   }
-  // 채팅창 이름별 이모지
+
   String _getRoleEmoji(String role) {
     if (role == 'owner') return '⭐ ';
     return '';
@@ -101,6 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
       'senderId': user.uid,
       'text': text,
       'timestamp': FieldValue.serverTimestamp(),
+      'readBy': [user.uid],
     });
 
     _messageController.clear();
@@ -135,7 +135,6 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
-          // 🔽 채팅 메시지 리스트
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -169,12 +168,24 @@ class _ChatScreenState extends State<ChatScreen> {
                     final message = messageData['text'] ?? '';
                     final isMe = currentUser?.uid == senderId;
 
-                    _loadUserInfo(senderId); // 캐시 없으면 불러오기
+                    _loadUserInfo(senderId);
+
+                    final Map<String, dynamic> data = messageData.data() as Map<String, dynamic>;
+                    final List<String> readBy =
+                    (data.containsKey('readBy') && data['readBy'] is List)
+                        ? List<String>.from(data['readBy'])
+                        : [];
+
+                    if (!readBy.contains(currentUser?.uid)) {
+                      messageData.reference.update({
+                        'readBy': FieldValue.arrayUnion([currentUser!.uid])
+                      });
+                    }
 
                     final userInfo = _userInfoCache[senderId];
                     final name = userInfo?['name'] ?? '...';
                     final role = userInfo?['role'] ?? 'staff';
-                    final displayName = "${_getRoleEmoji(role)} $name";
+                    final displayName = "${_getRoleEmoji(role)}$name";
 
                     return Align(
                       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -191,19 +202,40 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Container(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isMe ? mainBlue : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              message,
-                              style: TextStyle(
-                                color: isMe ? Colors.white : Colors.black,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              if (isMe)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Text(
+                                    readBy.length >= _members.length
+                                        ? '✔ 모두 읽음'
+                                        : '✔ ${readBy.length}/${_members.length}',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                constraints: const BoxConstraints(maxWidth: 250), // ✅ 최대 너비 제한
+                                decoration: BoxDecoration(
+                                  color: isMe ? mainBlue : Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  message,
+                                  softWrap: true,            // ✅ 줄바꿈 허용
+                                  overflow: TextOverflow.visible,
+                                  style: TextStyle(
+                                    color: isMe ? Colors.white : Colors.black,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
@@ -216,7 +248,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
           const Divider(height: 1),
 
-          // 🔽 메시지 입력창
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             color: Colors.grey[100],
