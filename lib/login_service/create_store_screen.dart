@@ -78,7 +78,13 @@ class CreateStoreScreen extends StatelessWidget {
                     'members': [],
                     'storeType': '카페',
                   });
-
+                  // 🔥 chatRooms도 같이 생성
+                  await FirebaseFirestore.instance.collection('chatRooms').doc(storeRef.id).set({
+                    'storeId': storeRef.id,
+                    'ownerId': uid,
+                    'managerId': null,
+                    'members': [uid], // 채팅 멤버 목록에도 추가
+                  });
                   await FirebaseFirestore.instance.collection('users').doc(uid).update({
                     'storeId': storeRef.id,
                     'role': 'owner',

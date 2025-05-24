@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
 
@@ -14,69 +13,97 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
-  bool _isOwner = false;
-  List<String> _members = []; //전체 참여자 UID 목록
-  String? _selectedUid; // 선택된 UID
+  List<String> _members = [];
   String? _ownerId;
-  String? _menagerId;
+  String? _storeId;
+
+  // 🔹 사용자 정보 캐시: uid -> {'name': 전유진, 'role': owner}
+  Map<String, Map<String, dynamic>> _userInfoCache = {};
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print("포그라운드 메시지 수신: ${message.notification?.title}");
     });
 
-    _checkIfOwner();
-    _loadMembers();
-
+    _loadUserStoreId();
   }
-  void _checkIfOwner() async{
-    final user = FirebaseAuth.instance.currentUser;
-    final doc = await FirebaseFirestore.instance.collection('chatRooms').doc('defaultRoom').get();
-    final ownerId = doc['ownerId'];
-    final managerId = doc['managerId']; // 부방장 가져오기
+
+  void _loadUserStoreId() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final storeId = userDoc['storeId'];
+
     setState(() {
-      _isOwner = user?.uid == ownerId;
+      _storeId = storeId;
+    });
+
+    _loadChatRoomInfo(storeId);
+    _loadMembers(storeId);
+  }
+
+  Future<void> _loadChatRoomInfo(String storeId) async {
+    final doc = await FirebaseFirestore.instance.collection('chatRooms').doc(storeId).get();
+    final ownerId = doc['ownerId'];
+
+    setState(() {
       _ownerId = ownerId;
-      _menagerId = managerId;
     });
   }
-  String _getUserRole(String uid){
-    if (uid == _ownerId) return"[점주]";
-    if (uid == _menagerId) return"[매니저]";
-    return "[직원]";
-  }
-  Future<void> _loadMembers()async{
-    final doc = await FirebaseFirestore.instance.collection('chatRooms').doc('defaultRoom').get();
 
+  Future<void> _loadMembers(String storeId) async {
+    final doc = await FirebaseFirestore.instance.collection('chatRooms').doc(storeId).get();
     final List<dynamic> members = doc['members'];
     setState(() {
       _members = members.cast<String>();
     });
+
+    for (final uid in members) {
+      await _loadUserInfo(uid);
     }
+  }
 
+  Future<void> _loadUserInfo(String uid) async {
+    if (_userInfoCache.containsKey(uid)) return;
 
-  Future<void> _assignManager(String selectedUid) async{
-    await FirebaseFirestore.instance.collection('chatRooms').doc('defaultRoom').update({'managerId' : selectedUid});
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (doc.exists) {
+      final data = doc.data()!;
+      _userInfoCache[uid] = {
+        'name': data['name'] ?? '알 수 없음',
+        'role': data['role'] ?? 'staff',
+      };
+      setState(() {});
+    }
+  }
+  // 채팅창 이름별 이모지
+  String _getRoleEmoji(String role) {
+    if (role == 'owner') return '⭐ ';
+    return '';
   }
 
   void _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _storeId == null) return;
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     await FirebaseFirestore.instance
         .collection('chatRooms')
-        .doc('defaultRoom')
+        .doc(_storeId!)
         .collection('messages')
-        .add({'senderId': user.uid, 'text': text, 'timestamp': FieldValue.serverTimestamp()});
+        .add({
+      'senderId': user.uid,
+      'text': text,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
 
     _messageController.clear();
-
   }
 
   @override
@@ -84,68 +111,36 @@ class _ChatScreenState extends State<ChatScreen> {
     const mainBlue = AppColors.primary;
     final currentUser = FirebaseAuth.instance.currentUser;
 
+    if (_storeId == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           '채팅',
           style: TextStyle(
-            color: AppColors.primary, // mainBlue 직접 넣기
+            color: AppColors.primary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
-        backgroundColor: Colors.transparent, // 파란색 띠 제거
-        elevation: 0, // 그림자 제거
-        centerTitle: false, // 왼쪽 정렬
-        iconTheme: const IconThemeData(color: AppColors.primary), // 아이콘도 파란색
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: Column(
         children: [
-          // 점주만 볼 수 있는 부방장 지정 버튼
-          if (_isOwner)
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: DropdownButton<String>(
-                      value: _selectedUid,
-                      hint: const Text("부방장 선택"),
-                      isExpanded: true,
-                      items: _members.map((uid) {
-                        return DropdownMenuItem<String>(
-                          value: uid,
-                          child: Text(uid),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedUid = value;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: _selectedUid == null
-                        ? null
-                        : () {
-                      _assignManager(_selectedUid!);
-                    },
-                    child: const Text("지정"),
-                  ),
-                ],
-              ),
-            ),
-
-
-          // 채팅 메시지 출력 영역
+          // 🔽 채팅 메시지 리스트
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('chatRooms')
-                  .doc('defaultRoom')
+                  .doc(_storeId!)
                   .collection('messages')
                   .orderBy('timestamp', descending: true)
                   .snapshots(),
@@ -163,7 +158,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 final messages = snapshot.data!.docs;
-                final currentUser = FirebaseAuth.instance.currentUser;
 
                 return ListView.builder(
                   padding: const EdgeInsets.all(12),
@@ -171,28 +165,47 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final messageData = messages[index];
-                    final message = messageData['text'] ?? '';
                     final senderId = messageData['senderId'];
+                    final message = messageData['text'] ?? '';
                     final isMe = currentUser?.uid == senderId;
-                    final roleTag = _getUserRole(senderId);
+
+                    _loadUserInfo(senderId); // 캐시 없으면 불러오기
+
+                    final userInfo = _userInfoCache[senderId];
+                    final name = userInfo?['name'] ?? '...';
+                    final role = userInfo?['role'] ?? 'staff';
+                    final displayName = "${_getRoleEmoji(role)} $name";
 
                     return Align(
-                      alignment:
-                      isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isMe ? mainBlue : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          "$roleTag $message" ,
-
-                          style: TextStyle(
-                            color: isMe ? Colors.white : Colors.black,
+                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment:
+                        isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.grey,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 4),
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isMe ? mainBlue : Colors.grey[300],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              message,
+                              style: TextStyle(
+                                color: isMe ? Colors.white : Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -203,7 +216,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
           const Divider(height: 1),
 
-          // 입력창
+          // 🔽 메시지 입력창
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             color: Colors.grey[100],

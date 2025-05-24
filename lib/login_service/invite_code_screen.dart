@@ -57,6 +57,11 @@ class _InviteCodeScreenState extends State<InviteCodeScreen> {
         'storeId': storeId,
       }, SetOptions(merge: true));
 
+      // 🔥 chatRooms에도 사용자 추가
+      await FirebaseFirestore.instance.collection('chatRooms').doc(storeId).update({
+        'members': FieldValue.arrayUnion([userId]),
+      });
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainNavigation()),
