@@ -1,9 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:refill/login_service/store_entry_screen.dart';
-import 'package:refill/login_service/login_screen.dart';
+
+import '../main_navigation.dart';
 import 'package:refill/colors.dart';
+
+import 'package:refill/login_service/login_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -86,23 +89,27 @@ class _SignupScreenState extends State<SignupScreen> {
     final isValid = _formKey.currentState!.validate();
     if (!isValid) return;
 
+    // ID 중복 확인 여부 확인
     if (!_isIdChecked) {
       _showSnackBar('ID 중복 확인을 해주세요.');
       return;
     }
 
+    // 이메일 중복 확인 (validator에서 쓸 수 없으므로 여기서 처리)
     final isDuplicateEmail = await isEmailDuplicated(_emailController.text.trim());
     if (isDuplicateEmail) {
       setState(() => _isEmailDuplicate = true);
-      _formKey.currentState!.validate(); // 에러 메시지 반영
+      _formKey.currentState!.validate(); // 다시 에러 반영
       return;
     }
 
+    // 비밀번호 확인
     if (_passwordController.text != _checkPasswordController.text) {
       _showSnackBar('비밀번호가 일치하지 않습니다.');
       return;
     }
 
+    // 회원가입 진행
     try {
       final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
@@ -113,18 +120,17 @@ class _SignupScreenState extends State<SignupScreen> {
         'userId': _idController.text.trim(),
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
-        'hasStore': false,
         'createdAt': Timestamp.now(),
       });
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const StoreEntryScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
         setState(() => _isEmailDuplicate = true);
-        _formKey.currentState!.validate();
+        _formKey.currentState!.validate(); // 에러 메시지 반영
       } else {
         debugPrint('회원가입 실패: ${e.message}');
       }
@@ -155,6 +161,7 @@ class _SignupScreenState extends State<SignupScreen> {
       errorStyle: const TextStyle(color: AppColors.error, fontSize: 13),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -223,6 +230,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                 return 'ID를 입력해주세요.';
                               }
                               if (value.contains(' ')) {
+                                setState(() {
+                                  _idMessage = null;
+                                });
                                 return '공백 없이 입력해주세요.';
                               }
                               return null;
@@ -268,7 +278,11 @@ class _SignupScreenState extends State<SignupScreen> {
                     TextFormField(
                       controller: _emailController,
                       decoration: _buildInputDecoration('이메일'),
-                      onChanged: (_) => setState(() => _isEmailDuplicate = false),
+                      onChanged: (_) {
+                        setState(() {
+                          _isEmailDuplicate = false;
+                        });
+                      },
                       validator: (value) {
                         if (value == null || value.isEmpty) return '이메일을 입력해주세요.';
                         final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
@@ -284,7 +298,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       decoration: _buildInputDecoration('비밀번호'),
                       validator: (value) {
                         if (value == null || value.length < 6) return '6자 이상 입력해주세요.';
-                        if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(value)) {
+                        if (!RegExp(r'[!@#\\$%^&*(),.?":{}|<>]').hasMatch(value)) {
                           return '특수문자를 포함해야 합니다.';
                         }
                         return null;

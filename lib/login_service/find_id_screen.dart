@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:refill/colors.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:refill/login_service/login_screen.dart'; // 로그인 화면 import (이메일 인증 후 로그인화면으로 돌아가서 재로그인)
-import 'package:refill/colors.dart';
+
 
 class FindIdScreen extends StatefulWidget {
   const FindIdScreen({super.key});
@@ -33,9 +35,14 @@ class _FindIdScreenState extends State<FindIdScreen> {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        setState(() {
-          _foundUserId = snapshot.docs.first['userId'];
-        });
+        final data = snapshot.docs.first.data();
+        if (data.containsKey('userId')) {
+          setState(() {
+            _foundUserId = data['userId'];
+          });
+        } else {
+          _showSnackBar("구글 연동 계정입니다. 아이디 조회가 불가능합니다.");
+        }
       } else {
         _showSnackBar("해당 이메일로 등록된 아이디를 찾을 수 없습니다.");
       }

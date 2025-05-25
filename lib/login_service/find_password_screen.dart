@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:refill/colors.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:refill/login_service/login_screen.dart';
-import 'package:refill/colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class FindPasswordScreen extends StatefulWidget {
   const FindPasswordScreen({super.key});
@@ -26,13 +30,26 @@ class _FindPasswordScreenState extends State<FindPasswordScreen> {
     }
 
     try {
+      // Firestore에서 이메일 존재 여부 확인
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        _showSnackBar("해당 이메일로 가입된 계정이 없습니다.");
+        return;
+      }
+
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      _showSnackBar("비밀번호 재설정 메일을 보냈습니다. 메일함을 확인해주세요.");
+      _showSnackBar("비밀번호 재설정 메일을 보냈습니다.\n메일이 오지 않는 경우, 스팸함을 확인해주세요.");
     } catch (e) {
-      _showSnackBar("이메일을 찾을 수 없습니다.");
+      _showSnackBar("비밀번호 재설정에 실패했습니다.");
       print("비밀번호 재설정 오류: $e");
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

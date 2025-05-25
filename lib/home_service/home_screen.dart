@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:refill/home_service/weather_box.dart';
@@ -14,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? storeName;
   bool isLoading = true;
-  static const mainBlue = Color(0xFF2563EB);
+  static const mainBlue = AppColors.primary;
 
   final Map<DateTime, List<String>> holidayEvents = {
     DateTime.utc(2025, 5, 5): ['어린이날'],
@@ -36,20 +37,26 @@ class _HomeScreenState extends State<HomeScreen> {
     if (uid == null) return;
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('stores')
-          .where('ownerUid', isEqualTo: uid)
-          .limit(1)
-          .get();
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final storeId = userDoc.data()?['storeId'];
 
-      if (snapshot.docs.isNotEmpty) {
+      if (storeId == null) {
         setState(() {
-          storeName = snapshot.docs.first['storeName'];
+          storeName = '매장에 가입되지 않았습니다';
+          isLoading = false;
+        });
+        return;
+      }
+
+      final storeDoc = await FirebaseFirestore.instance.collection('stores').doc(storeId).get();
+      if (storeDoc.exists) {
+        setState(() {
+          storeName = storeDoc.data()?['storeName'] ?? '이름 없는 매장';
           isLoading = false;
         });
       } else {
         setState(() {
-          storeName = '매장을 먼저 생성해주세요';
+          storeName = '매장 정보를 찾을 수 없습니다';
           isLoading = false;
         });
       }
@@ -64,11 +71,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("홈"),
         backgroundColor: mainBlue,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -193,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: mainBlue),
                   ),
@@ -216,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           label: const Text('발주에 추가'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: mainBlue,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.background,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
