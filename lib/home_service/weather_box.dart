@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 
 import 'package:refill/colors.dart';
 
-
 class WeatherBox extends StatefulWidget {
   const WeatherBox({super.key});
 
@@ -17,7 +16,6 @@ class _WeatherBoxState extends State<WeatherBox> {
   String weather = '로딩 중...';
   String temperature = '';
   String humidity = '';
-  final Color mainBlue = AppColors.primary;
 
   @override
   void initState() {
@@ -30,17 +28,17 @@ class _WeatherBoxState extends State<WeatherBox> {
       Position pos = await _getCurrentLocation();
       final data = await _fetchWeather(pos.latitude, pos.longitude);
 
-      print("날씨 데이터: $data");
-
       setState(() {
-        weather = data['weather'][0]['description']; // ex: 맑음
+        weather = data['weather'][0]['description'];
         temperature = '${data['main']['temp']}°C';
         humidity = '습도 ${data['main']['humidity']}%';
       });
     } catch (e) {
-      print("에러: $e");
+      print("날씨 로딩 실패: $e");
       setState(() {
-        weather = '날씨 불러오기 실패';
+        weather = '불러오기 실패';
+        temperature = '';
+        humidity = '';
       });
     }
   }
@@ -57,52 +55,36 @@ class _WeatherBoxState extends State<WeatherBox> {
       }
     }
 
-
-    Position pos = await Geolocator.getCurrentPosition(
+    return await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
-      timeLimit: const Duration(seconds: 10), // optional: 실패 시 빠르게 에러 발생
+      timeLimit: const Duration(seconds: 10),
     );
-
-    print("위치: lat=${pos.latitude}, lon=${pos.longitude}");
-
-    return pos;
   }
 
-
   Future<Map<String, dynamic>> _fetchWeather(double lat, double lon) async {
-    const apiKey = '3a7bc2dc7a3b4025ce04a27e31923af7'; //  OpenWeatherMap API 키
+    const apiKey = '3a7bc2dc7a3b4025ce04a27e31923af7';
     final url = Uri.parse(
-        'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&lang=kr&appid=$apiKey'
-    );
+        'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&lang=kr&appid=$apiKey');
 
     final response = await http.get(url);
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      print("응답 본문: ${response.body}");
-      throw Exception('날씨 정보 불러오기 실패');
+      throw Exception('날씨 데이터 오류');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: mainBlue),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.wb_sunny, size: 32, color: AppColors.primary),
-          const SizedBox(height: 8),
-          Text(weather, style: TextStyle(fontWeight: FontWeight.bold, color: mainBlue)),
-          Text(temperature, style: TextStyle(color: mainBlue)),
-          Text(humidity, style: TextStyle(color: mainBlue)),
-        ],
-      ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.wb_sunny, size: 32, color: AppColors.primary),
+        const SizedBox(height: 8),
+        Text(weather, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+        Text(temperature, style: const TextStyle(color: AppColors.primary)),
+        Text(humidity, style: const TextStyle(color: AppColors.primary)),
+      ],
     );
   }
 }
