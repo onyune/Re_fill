@@ -11,7 +11,6 @@ class OrderScreen extends StatefulWidget {
 class _OrderScreenState extends State<OrderScreen> {
   bool isAuto = false;
   final List<Map<String, dynamic>> items = [];
-  final Color mainBlue = AppColors.primary;
 
   void _addItem(String name) {
     setState(() {
@@ -101,32 +100,35 @@ class _OrderScreenState extends State<OrderScreen> {
             ),
             const SizedBox(height: 20),
 
-            // 수동/자동 발주 전환 버튼
-            Center(
-              child: ToggleButtons(
-                isSelected: [!isAuto, isAuto],
-                onPressed: (index) {
-                  setState(() {
-                    isAuto = index == 1;
-                  });
-                },
-                borderRadius: BorderRadius.circular(10),
-                selectedColor: AppColors.background,
-                fillColor: AppColors.primary,
-                color: AppColors.primary,
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 60),
-                    child: Text('수동 발주'),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 60),
-                    child: Text('자동 발주'),
-                  ),
-                ],
-              ),
+            // 자동 발주 스위치
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('자동 발주', style: TextStyle(fontSize: 16)),
+                Switch(
+                  value: isAuto,
+                  activeColor: AppColors.primary,
+                  onChanged: (value) {
+                    setState(() => isAuto = value);
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
+
+            // 스위치 활성화 안내 문구
+            if (isAuto)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '✅ 자동 발주 기능이 활성화되어 있습니다.',
+                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 10),
 
             // 항목 리스트
             Expanded(

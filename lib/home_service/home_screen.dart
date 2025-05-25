@@ -117,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: mainBlue),
+                            border: Border.all(color: AppColors.primary),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const WeatherBox(),
