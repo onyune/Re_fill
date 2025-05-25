@@ -10,7 +10,7 @@ class TeamManagePage extends StatelessWidget {
         title: const Text('팀 관리',
           style: TextStyle(color: Color(0xFF2563EB),
         fontWeight: FontWeight.bold,
-        fontSize: 20,
+        fontSize: 24,
       ),),
       ),
       body: ListView(

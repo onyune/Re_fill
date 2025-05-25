@@ -4,8 +4,6 @@ import 'package:refill/setting_service/store_change_page.dart'; //매장 변경
 import 'package:refill/setting_service/team_manage_page.dart'; // 팀원 관리
 
 
-//다음에 할 거 회원정보수정 회원탈퇴시 팝업창 로그아웃후 첫화면 등
-
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -16,6 +14,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool lowStockNotification = true;
   bool darkMode = false;
+  bool isAutoOrderEnabled = true;
 
   final Color mainBlue = const Color(0xFF2563EB);
 
@@ -28,7 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             color: Color(0xFF2563EB),
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 24,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -86,6 +85,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             // 재고 설정
             const Text('재고 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero, //좌우여백없애는거
+              title: const Text('자동 발주'),
+              value: isAutoOrderEnabled,
+              onChanged: (value) {
+                setState(() {
+                  isAutoOrderEnabled = value;
+                });
+              },
+              activeColor: mainBlue,
+            ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('재고 부족 알림 설정'),
