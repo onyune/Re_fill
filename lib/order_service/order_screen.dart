@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -10,48 +12,97 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   bool isAuto = false;
-  final List<Map<String, dynamic>> items = [];
+  List<Map<String, dynamic>> items = [];
 
-  void _addItem(String name) {
+  @override
+  void initState() {
+    super.initState();
+    _loadOrderData();
+  }
+
+  Future<void> _loadOrderData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    // 🔹 storeId 가져오기
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final storeId = userDoc['storeId'];
+
+    // 🔹 orderTemplates(공통 발주 목록) 가져오기
+    final orderTemplateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
+
+    // 🔹 매장의 stocks 데이터 가져오기
+    final stockSnap = await FirebaseFirestore.instance
+        .collection('stocks')
+        .doc(storeId)
+        .collection('items')
+        .get();
+
+    // 🔹 stock 데이터를 Map으로 정리
+    Map<String, dynamic> stockMap = {
+      for (var doc in stockSnap.docs) doc.id: doc.data()
+    };
+
+    // 🔹 두 개를 조합
+    final combined = orderTemplateSnap.docs.map((doc) {
+      final name = doc.id;
+      final template = doc.data();
+      final stock = stockMap[name];
+
+      return {
+        'name': name,
+        'unit': template['unit'] ?? '',
+        'defaultQuantity': template['defaultQuantity'] ?? 1,
+        'stock': stock?['quantity'] ?? 0,
+        'min': stock?['minQuantity'] ?? 0,
+        'count': 1,
+      };
+    }).toList();
+
     setState(() {
-      items.add({'name': name, 'stock': 0, 'count': 1});
+      items = combined;
     });
   }
 
-  void _showAddItemDialog() {
-    final TextEditingController _controller = TextEditingController();
+  Future<void> _placeOrder() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
 
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('새 품목 추가'),
-          content: TextField(
-            controller: _controller,
-            decoration: const InputDecoration(hintText: '품목명을 입력하세요'),
-            autofocus: true,
-          ),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              onPressed: () {
-                final name = _controller.text.trim();
-                if (name.isNotEmpty) {
-                  _addItem(name);
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('추가', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
+    final userDoc =
+    await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final storeId = userDoc['storeId'];
+
+    final batch = FirebaseFirestore.instance.batch();
+
+    for (var item in items) {
+      final count = item['count'];
+      final itemName = item['name'];
+
+      // 수량 0은 패스
+      if (count <= 0) continue;
+
+      final docRef = FirebaseFirestore.instance
+          .collection('stocks')
+          .doc(storeId)
+          .collection('items')
+          .doc(itemName);
+
+      // 기존 수량 읽어서 업데이트
+      final docSnap = await docRef.get();
+      final currentQty = (docSnap.data()?['quantity'] ?? 0) as int;
+      final newQty = currentQty + count;
+
+      batch.update(docRef, {'quantity': newQty});
+    }
+
+    await batch.commit();
+
+    // 완료 후 다시 불러오기
+    await _loadOrderData();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("발주가 완료되었습니다.")),
     );
-  }
-
-  void _placeOrder() {
-    debugPrint('장바구니: $items');
   }
 
   @override
@@ -76,7 +127,7 @@ class _OrderScreenState extends State<OrderScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
-            // 검색창
+            // 🔍 검색창
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -100,7 +151,7 @@ class _OrderScreenState extends State<OrderScreen> {
             ),
             const SizedBox(height: 20),
 
-            // 자동 발주 스위치
+            // 🔁 자동 발주 스위치
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -115,7 +166,6 @@ class _OrderScreenState extends State<OrderScreen> {
               ],
             ),
 
-            // 스위치 활성화 안내 문구
             if (isAuto)
               const Padding(
                 padding: EdgeInsets.only(bottom: 12),
@@ -130,22 +180,31 @@ class _OrderScreenState extends State<OrderScreen> {
 
             const SizedBox(height: 10),
 
-            // 항목 리스트
+            // 📦 발주 항목 리스트
             Expanded(
               child: ListView.separated(
                 itemCount: items.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {
                   final item = items[index];
+                  final isShort = item['stock'] < item['min'];
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text(
+                            item['name'],
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                           const SizedBox(height: 4),
-                          Text('현재재고 ${item['stock']}'),
+                          Text(
+                            '현재재고 ${item['stock']} / 최소 ${item['min']}',
+                            style: TextStyle(
+                              color: isShort ? Colors.red : Colors.black54,
+                            ),
+                          ),
                         ],
                       ),
                       Row(
@@ -175,20 +234,9 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
 
-            // 리스트 추가 버튼
-            GestureDetector(
-              onTap: _showAddItemDialog,
-              child: const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '+ 리스트 추가',
-                  style: TextStyle(color: AppColors.primary, fontSize: 16),
-                ),
-              ),
-            ),
             const SizedBox(height: 20),
 
-            // 발주 버튼
+            // ✅ 발주 버튼
             SizedBox(
               width: double.infinity,
               height: 48,
