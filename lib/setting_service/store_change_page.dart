@@ -10,7 +10,7 @@ class StoreChangePage extends StatelessWidget {
         title: const Text('매장 변경',
         style: TextStyle(color: Color(0xFF2563EB),
           fontWeight: FontWeight.bold,
-          fontSize: 20,
+          fontSize: 24,
         ),),
       ),
       body: ListView(
