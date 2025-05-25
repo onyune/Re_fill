@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+
+import 'package:refill/colors.dart';
+
 import 'dart:async';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,12 +24,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2563EB), // 리필 메인 블루
+      backgroundColor: AppColors.primary,
       body: Center(
         child: Text(
           'Re:fill',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.background,
             fontSize: 40,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.5,

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:refill/colors.dart';
+
+
 class WeatherBox extends StatefulWidget {
   const WeatherBox({super.key});
 
@@ -14,7 +17,7 @@ class _WeatherBoxState extends State<WeatherBox> {
   String weather = '로딩 중...';
   String temperature = '';
   String humidity = '';
-  final Color mainBlue = const Color(0xFF2563EB);
+  final Color mainBlue = AppColors.primary;
 
   @override
   void initState() {
@@ -86,14 +89,14 @@ class _WeatherBoxState extends State<WeatherBox> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: mainBlue),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.wb_sunny, size: 32, color: Color(0xFF2563EB)),
+          const Icon(Icons.wb_sunny, size: 32, color: AppColors.primary),
           const SizedBox(height: 8),
           Text(weather, style: TextStyle(fontWeight: FontWeight.bold, color: mainBlue)),
           Text(temperature, style: TextStyle(color: mainBlue)),
