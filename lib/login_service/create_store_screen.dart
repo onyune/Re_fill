@@ -68,7 +68,12 @@ class CreateStoreScreen extends StatelessWidget {
 
                   final fullStoreName = '$prefix 커피 $suffix 점';
 
-                  final storeRef = await FirebaseFirestore.instance.collection('stores').add({
+                  // 🔥 batch 시작
+                  final batch = FirebaseFirestore.instance.batch();
+
+                  // 🔹 store 생성
+                  final storeRef = FirebaseFirestore.instance.collection('stores').doc();
+                  batch.set(storeRef, {
                     'storeName': fullStoreName,
                     'storeNamePrefix': prefix,
                     'storeNameSuffix': suffix,
@@ -78,18 +83,43 @@ class CreateStoreScreen extends StatelessWidget {
                     'members': [],
                     'storeType': '카페',
                   });
-                  // 🔥 chatRooms도 같이 생성
-                  await FirebaseFirestore.instance.collection('chatRooms').doc(storeRef.id).set({
+
+                  // 🔹 chatRoom 생성
+                  final chatRoomRef = FirebaseFirestore.instance.collection('chatRooms').doc(storeRef.id);
+                  batch.set(chatRoomRef, {
                     'storeId': storeRef.id,
                     'ownerId': uid,
                     'managerId': null,
-                    'members': [uid], // 채팅 멤버 목록에도 추가
+                    'members': [uid],
                   });
-                  await FirebaseFirestore.instance.collection('users').doc(uid).update({
+
+                  // 🔹 사용자 문서 업데이트
+                  final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+                  batch.update(userRef, {
                     'storeId': storeRef.id,
                     'role': 'owner',
                     'createdAt': FieldValue.serverTimestamp(),
                   });
+
+                  // 🔹 orderTemplates 가져와서 stocks 문서 생성
+                  final templateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
+                  for (final doc in templateSnap.docs) {
+                    final itemName = doc.id;
+                    final stockRef = FirebaseFirestore.instance
+                        .collection('stocks')
+                        .doc(storeRef.id)
+                        .collection('items')
+                        .doc(itemName);
+
+                    batch.set(stockRef, {
+                      'name': itemName,
+                      'quantity': 0,
+                      'minQuantity': 0,
+                    });
+                  }
+
+                  // 🔥 커밋
+                  await batch.commit();
 
                   Navigator.pushAndRemoveUntil(
                     context,
@@ -97,6 +127,7 @@ class CreateStoreScreen extends StatelessWidget {
                         (route) => false,
                   );
                 },
+
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                 child: const Text('생성', style: TextStyle(color: AppColors.background)),
               )

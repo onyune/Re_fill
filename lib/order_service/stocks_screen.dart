@@ -3,83 +3,77 @@ import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class OrderScreen extends StatefulWidget {
-  const OrderScreen({super.key});
+class StocksScreen extends StatefulWidget {
+  const StocksScreen({super.key});
 
   @override
-  State<OrderScreen> createState() => _OrderScreenState();
+  State<StocksScreen> createState() => _StocksScreenState();
 }
 
-class _OrderScreenState extends State<OrderScreen> {
+class _StocksScreenState extends State<StocksScreen> {
   bool isAuto = false;
-  List<Map<String, dynamic>> items = [];
+  List<Map<String, dynamic>> stockItems = [];
+  String role = 'staff'; // 기본값: staff
 
   @override
   void initState() {
     super.initState();
-    _loadOrderData();
+    _loadStockData();
   }
 
-  Future<void> _loadOrderData() async {
+  Future<void> _loadStockData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    // 🔹 storeId 가져오기
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
+    role = userDoc['role'] ?? 'staff';
 
-    // 🔹 orderTemplates(공통 발주 목록) 가져오기
-    final orderTemplateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
+    final templateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
 
-    // 🔹 매장의 stocks 데이터 가져오기
     final stockSnap = await FirebaseFirestore.instance
         .collection('stocks')
         .doc(storeId)
         .collection('items')
         .get();
 
-    // 🔹 stock 데이터를 Map으로 정리
     Map<String, dynamic> stockMap = {
       for (var doc in stockSnap.docs) doc.id: doc.data()
     };
 
-    // 🔹 두 개를 조합
-    final combined = orderTemplateSnap.docs.map((doc) {
+    final combined = templateSnap.docs.map((doc) {
       final name = doc.id;
       final template = doc.data();
       final stock = stockMap[name];
+      final currentQty = stock?['quantity'] ?? 0;
 
       return {
         'name': name,
         'unit': template['unit'] ?? '',
         'defaultQuantity': template['defaultQuantity'] ?? 1,
-        'stock': stock?['quantity'] ?? 0,
+        'stock': currentQty,
         'min': stock?['minQuantity'] ?? 0,
-        'count': 0,
+        'count': currentQty, // ✅ 현재 재고 수량으로 초기화
       };
     }).toList();
 
     setState(() {
-      items = combined;
+      stockItems = combined;
     });
   }
 
-  Future<void> _placeOrder() async {
+  Future<void> _saveStockChanges() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc =
-    await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
 
     final batch = FirebaseFirestore.instance.batch();
 
-    for (var item in items) {
+    for (var item in stockItems) {
       final count = item['count'];
       final itemName = item['name'];
-
-      // 수량 0은 패스
-      if (count <= 0) continue;
 
       final docRef = FirebaseFirestore.instance
           .collection('stocks')
@@ -87,21 +81,14 @@ class _OrderScreenState extends State<OrderScreen> {
           .collection('items')
           .doc(itemName);
 
-      // 기존 수량 읽어서 업데이트
-      final docSnap = await docRef.get();
-      final currentQty = (docSnap.data()?['quantity'] ?? 0) as int;
-      final newQty = currentQty + count;
-
-      batch.update(docRef, {'quantity': newQty});
+      batch.update(docRef, {'quantity': count}); // ✅ 입력한 수량 그대로 저장 (덮어쓰기)
     }
 
     await batch.commit();
-
-    // 완료 후 다시 불러오기
-    await _loadOrderData();
+    await _loadStockData();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("발주가 완료되었습니다.")),
+      const SnackBar(content: Text("재고가 수정되었습니다.")),
     );
   }
 
@@ -111,7 +98,7 @@ class _OrderScreenState extends State<OrderScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
-          '발주',
+          '재고 관리',
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
@@ -149,45 +136,22 @@ class _OrderScreenState extends State<OrderScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
 
-            // 🔁 자동 발주 스위치
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('자동 발주', style: TextStyle(fontSize: 16)),
-                Switch(
-                  value: isAuto,
-                  activeColor: AppColors.primary,
-                  onChanged: (value) {
-                    setState(() => isAuto = value);
-                  },
-                ),
-              ],
-            ),
+            const SizedBox(height: 16),
 
-            if (isAuto)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '✅ 자동 발주 기능이 활성화되어 있습니다.',
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 10),
-
-            // 📦 발주 항목 리스트
+            // 📦 재고 항목 리스트
             Expanded(
               child: ListView.separated(
-                itemCount: items.length,
+                itemCount: stockItems.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {
-                  final item = items[index];
+                  final item = stockItems[index];
                   final isShort = item['stock'] < item['min'];
+
+                  final stockText = (role == 'owner')
+                      ? '현재재고 ${item['stock']} / 최소 ${item['min']}'
+                      : '현재재고 ${item['stock']}';
+
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -200,7 +164,7 @@ class _OrderScreenState extends State<OrderScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '현재재고 ${item['stock']} / 최소 ${item['min']}',
+                            stockText,
                             style: TextStyle(
                               color: isShort ? Colors.red : Colors.black54,
                             ),
@@ -236,14 +200,14 @@ class _OrderScreenState extends State<OrderScreen> {
 
             const SizedBox(height: 20),
 
-            // ✅ 발주 버튼
+            // ✅ 저장 버튼
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                onPressed: _placeOrder,
-                child: const Text('발주하기', style: TextStyle(fontSize: 16, color: Colors.white)),
+                onPressed: _saveStockChanges,
+                child: const Text('재고 수정', style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),
           ],
