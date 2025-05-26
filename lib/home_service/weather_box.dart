@@ -30,7 +30,7 @@ class _WeatherBoxState extends State<WeatherBox> {
       print("날씨 데이터: $data");
 
       setState(() {
-        weather = data['weather'][0]['description']; // ex: 맑음
+        weather = data['weather'][0]['description'];
         temperature = '${data['main']['temp']}°C';
         humidity = '습도 ${data['main']['humidity']}%';
       });
@@ -38,6 +38,8 @@ class _WeatherBoxState extends State<WeatherBox> {
       print("에러: $e");
       setState(() {
         weather = '날씨 불러오기 실패';
+        temperature = '';
+        humidity = '';
       });
     }
   }
@@ -54,52 +56,40 @@ class _WeatherBoxState extends State<WeatherBox> {
       }
     }
 
-
-    Position pos = await Geolocator.getCurrentPosition(
+    return await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
-      timeLimit: const Duration(seconds: 10), // optional: 실패 시 빠르게 에러 발생
+      timeLimit: const Duration(seconds: 10),
     );
-
-    print("위치: lat=${pos.latitude}, lon=${pos.longitude}");
-
-    return pos;
   }
 
-
   Future<Map<String, dynamic>> _fetchWeather(double lat, double lon) async {
-    const apiKey = '3a7bc2dc7a3b4025ce04a27e31923af7'; //  OpenWeatherMap API 키
+    const apiKey = '3a7bc2dc7a3b4025ce04a27e31923af7';
     final url = Uri.parse(
-        'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&lang=kr&appid=$apiKey'
+      'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&lang=kr&appid=$apiKey',
     );
 
     final response = await http.get(url);
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      print("응답 본문: ${response.body}");
+      print("응답 오류: ${response.body}");
       throw Exception('날씨 정보 불러오기 실패');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: mainBlue),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.wb_sunny, size: 32, color: Color(0xFF2563EB)),
-          const SizedBox(height: 8),
-          Text(weather, style: TextStyle(fontWeight: FontWeight.bold, color: mainBlue)),
-          Text(temperature, style: TextStyle(color: mainBlue)),
-          Text(humidity, style: TextStyle(color: mainBlue)),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.wb_sunny, size: 24, color: Color(0xFF2563EB)),
+        const SizedBox(width: 12),
+        Text(weather, style: TextStyle(fontWeight: FontWeight.bold, color: mainBlue)),
+        const SizedBox(width: 12),
+        Text(temperature, style: TextStyle(color: mainBlue)),
+        const SizedBox(width: 12),
+        Text(humidity, style: TextStyle(color: mainBlue)),
+      ],
     );
   }
 }
