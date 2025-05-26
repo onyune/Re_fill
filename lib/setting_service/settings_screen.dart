@@ -4,9 +4,12 @@ import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:refill/setting_service/team_management_screen.dart';
-import 'package:refill/setting_service/min_stock.dart';
-import 'package:refill/setting_service/store_change_page.dart';
+
+import 'user_card.dart';
+import 'invite_code.dart';
+import 'app_settings_section/app_settings.dart';
+import 'store_settings_section/store_settings.dart';
+import 'security_section.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,7 +21,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool lowStockNotification = true;
   String userName = '';
-  String role = ''; // 'owner', 'manager', 'staff'
+  String role = '';
   String inviteCode = '';
   bool isInviteCodeGenerated = false;
 
@@ -26,17 +29,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadUserData();
-  }
-
-  String _getRoleLabel(String role) {
-    switch (role) {
-      case 'owner':
-        return '점주';
-      case 'manager':
-        return '매니저';
-      default:
-        return '직원';
-    }
   }
 
   Future<void> _loadUserData() async {
@@ -70,7 +62,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _generateInviteCode() async {
     if (isInviteCodeGenerated) return;
-
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -105,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         context: context,
         builder: (_) => AlertDialog(
           title: const Text('비밀번호 변경'),
-          content: const Text('비밀번호 재설정 메일을 보냈습니다.'),
+          content: const Text('비밀번호 재설정 메일을 보냈습니다.\n로그인을 다시 진행해주세요.'),
           actions: [
             TextButton(
               onPressed: () async {
@@ -129,7 +120,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _deleteAccount() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-
     final isGoogleUser = user.providerData.any((info) => info.providerId == 'google.com');
 
     try {
@@ -144,8 +134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      final userData = userDoc.data();
-      final storeId = userData?['storeId'];
+      final storeId = userDoc.data()?['storeId'];
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
       if (role == 'owner' && storeId != null) {
@@ -181,95 +170,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 사용자 카드
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.primary.withAlpha(128)),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 30,
-                    backgroundColor: AppColors.background,
-                    child: Icon(Icons.person, size: 40, color: AppColors.primary),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('안녕하세요!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                        const SizedBox(height: 8),
-                        Text('${_getRoleLabel(role)} $userName 님', style: const TextStyle(fontSize: 16, color: AppColors.primary)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            UserCard(userName: userName, role: role),
             const SizedBox(height: 32),
-
-            if (role == 'owner') ...[
-              const Text('팀 초대', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              if (!isInviteCodeGenerated)
-                ElevatedButton(
-                  onPressed: _generateInviteCode,
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                  child: const Text('초대코드 생성', style: TextStyle(color: Colors.white)),
-                ),
-              if (inviteCode.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('초대코드: $inviteCode'),
-              ],
-              const SizedBox(height: 24),
-            ],
-
-            const Text('앱 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('재고 부족 알림 설정'),
-              value: lowStockNotification,
-              onChanged: (value) => setState(() => lowStockNotification = value),
-              activeColor: AppColors.primary,
-            ),
-            if (role != 'staff')
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('재고 최소 수량 설정'),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MinStockListPage())),
-              ),
-            Divider(thickness: 0.8, color: Colors.grey.shade300),
-
-            const SizedBox(height: 24),
-            const Text('매장 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('매장 변경'),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StoreChangePage())),
-            ),
             if (role == 'owner')
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('팀 관리'),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamManagementScreen())),
+              InviteCodeSection(
+                isInviteCodeGenerated: isInviteCodeGenerated,
+                inviteCode: inviteCode,
+                onGenerateInviteCode: _generateInviteCode,
               ),
-            Divider(thickness: 0.8, color: Colors.grey.shade300),
-
-            const SizedBox(height: 24),
-            const Text('개인/보안', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            if (!isGoogleUser)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('비밀번호 변경'),
-                onTap: _sendPasswordResetEmail,
-              ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('계정 탈퇴'),
-              onTap: () {
+            AppSettingsSection(
+              lowStockNotification: lowStockNotification,
+              onToggleLowStock: (value) => setState(() => lowStockNotification = value),
+              role: role,
+            ),
+            StoreSettingsSection(role: role),
+            SecuritySection(
+              isGoogleUser: isGoogleUser,
+              onResetPassword: _sendPasswordResetEmail,
+              onDeleteAccount: () {
                 showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
@@ -277,28 +195,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     content: const Text('정말로 계정을 삭제하시겠습니까?'),
                     actions: [
                       TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
-                      TextButton(onPressed: () async { Navigator.pop(context); await _deleteAccount(); }, child: const Text('탈퇴')),
+                      TextButton(onPressed: () async {
+                        Navigator.pop(context);
+                        await _deleteAccount();
+                      }, child: const Text('탈퇴')),
                     ],
                   ),
                 );
               },
+              onLogout: () async {
+                await FirebaseAuth.instance.signOut();
+                if (!mounted) return;
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+              },
             ),
-            const SizedBox(height: 24),
-
-            Center(
-              child: TextButton(
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  if (!mounted) return;
-                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-                },
-                child: const Text(
-                  '로그아웃',
-                  style: TextStyle(color: AppColors.borderDefault, decoration: TextDecoration.underline, fontSize: 14),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
           ],
         ),
       ),
