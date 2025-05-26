@@ -67,13 +67,12 @@ class CreateStoreScreen extends StatelessWidget {
                   }
 
                   final fullStoreName = '$prefix 커피 $suffix 점';
-                  final storeRef = FirebaseFirestore.instance.collection('stores').doc();
-                  final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-                  final chatRoomRef = FirebaseFirestore.instance.collection('chatRooms').doc(storeRef.id);
 
+                  // 🔥 batch 시작
                   final batch = FirebaseFirestore.instance.batch();
 
-                  // 🔹 매장 생성
+                  // 🔹 store 생성
+                  final storeRef = FirebaseFirestore.instance.collection('stores').doc();
                   batch.set(storeRef, {
                     'storeName': fullStoreName,
                     'storeNamePrefix': prefix,
@@ -85,7 +84,8 @@ class CreateStoreScreen extends StatelessWidget {
                     'storeType': '카페',
                   });
 
-                  // 🔹 채팅방 생성
+                  // 🔹 chatRoom 생성
+                  final chatRoomRef = FirebaseFirestore.instance.collection('chatRooms').doc(storeRef.id);
                   batch.set(chatRoomRef, {
                     'storeId': storeRef.id,
                     'ownerId': uid,
@@ -93,14 +93,15 @@ class CreateStoreScreen extends StatelessWidget {
                     'members': [uid],
                   });
 
-                  // 🔹 사용자 정보 업데이트
+                  // 🔹 사용자 문서 업데이트
+                  final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
                   batch.update(userRef, {
                     'storeId': storeRef.id,
                     'role': 'owner',
                     'createdAt': FieldValue.serverTimestamp(),
                   });
 
-                  // 🔹 공통 템플릿 기반 재고 문서 생성
+                  // 🔹 orderTemplates 가져와서 stocks 문서 생성
                   final templateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
                   for (final doc in templateSnap.docs) {
                     final itemName = doc.id;
@@ -117,6 +118,7 @@ class CreateStoreScreen extends StatelessWidget {
                     });
                   }
 
+                  // 🔥 커밋
                   await batch.commit();
 
                   Navigator.pushAndRemoveUntil(
@@ -125,6 +127,7 @@ class CreateStoreScreen extends StatelessWidget {
                         (route) => false,
                   );
                 },
+
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                 child: const Text('생성', style: TextStyle(color: AppColors.background)),
               )

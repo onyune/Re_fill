@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:refill/colors.dart';
 import 'home_service/home_screen.dart';
 import 'order_service/order_screen.dart';
 import 'order_service/stocks_screen.dart';
 import 'chat_service/chat_screen.dart';
 import 'setting_service/settings_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -18,9 +18,9 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   int _unreadCount = 0;
-  String _role = 'owner';
-  List<Widget>? _screens;
-  bool _isInitialized = false;
+  String _role = 'owner'; // 기본값
+  List<Widget>? _screens; // nullable로 바꿈
+  bool _isInitialized = false; // 초기화 완료 여부
 
   @override
   void initState() {
@@ -33,14 +33,15 @@ class _MainNavigationState extends State<MainNavigation> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc =
+    await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final role = userDoc['role'] ?? 'owner';
 
     setState(() {
       _role = role;
       _screens = [
-        const HomeScreen(),
-        role == 'owner' ? const OrderScreen() : const StocksScreen(),
+        HomeScreen(),
+        role == 'owner' ? OrderScreen() : StocksScreen(),
         const ChatScreen(),
         const SettingsScreen(),
       ];
@@ -52,7 +53,8 @@ class _MainNavigationState extends State<MainNavigation> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc =
+    await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
 
     FirebaseFirestore.instance
@@ -64,7 +66,9 @@ class _MainNavigationState extends State<MainNavigation> {
       int count = 0;
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        final readBy = (data['readBy'] is List) ? List<String>.from(data['readBy']) : [];
+        final readBy = (data.containsKey('readBy') && data['readBy'] is List)
+            ? List<String>.from(data['readBy'])
+            : [];
         if (!readBy.contains(uid)) {
           count++;
         }
@@ -87,13 +91,12 @@ class _MainNavigationState extends State<MainNavigation> {
       backgroundColor: AppColors.background,
       body: _screens![_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: AppColors.background,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() => _currentIndex = index);
         },
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor: AppColors.borderDefault,
         type: BottomNavigationBarType.fixed,
         items: [
           const BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),

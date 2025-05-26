@@ -17,11 +17,10 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool lowStockNotification = true;
-  bool darkMode = false;
   String userName = '';
-  String role = ''; // '관리자' or '직원'
+  String role = ''; // 'owner', 'manager', 'staff'
   String inviteCode = '';
-  bool isGoogleUser = false;
+  bool isInviteCodeGenerated = false;
 
   @override
   void initState() {
@@ -29,36 +28,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadUserData();
   }
 
+  String _getRoleLabel(String role) {
+    switch (role) {
+      case 'owner':
+        return '점주';
+      case 'manager':
+        return '매니저';
+      default:
+        return '직원';
+    }
+  }
+
   Future<void> _loadUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
 
-    setState(() {
-      isGoogleUser = user.providerData.any((info) => info.providerId == 'google.com');
-    });
-
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    final data = userDoc.data();
-
-    if (data != null) {
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      final data = userDoc.data()!;
       setState(() {
-        userName = data['name'] ?? '';
-        role = data['role'] == 'owner' ? '관리자' : '직원';
+        userName = data['name'] ?? '이름 없음';
+        role = data['role'] ?? 'staff';
       });
 
-      if (data['role'] == 'owner') {
+      if (role == 'owner') {
         final storeId = data['storeId'];
         if (storeId != null) {
           final storeDoc = await FirebaseFirestore.instance.collection('stores').doc(storeId).get();
-          setState(() {
-            inviteCode = storeDoc.data()?['inviteCode'] ?? '';
-          });
+          if (storeDoc.exists) {
+            final storeData = storeDoc.data();
+            final code = storeData?['inviteCode'] ?? '';
+            setState(() {
+              inviteCode = code;
+              isInviteCodeGenerated = code.isNotEmpty;
+            });
+          }
         }
       }
     }
   }
 
   Future<void> _generateInviteCode() async {
+    if (isInviteCodeGenerated) return;
+
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -73,6 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     setState(() {
       inviteCode = newCode;
+      isInviteCodeGenerated = true;
     });
   }
 
@@ -90,25 +103,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       showDialog(
         context: context,
-        barrierDismissible: false,
         builder: (_) => AlertDialog(
           title: const Text('비밀번호 변경'),
-          content: const Text('비밀번호 재설정 이메일을 보냈습니다.\n메일을 확인 후 다시 로그인해주세요.'),
+          content: const Text('비밀번호 재설정 메일을 보냈습니다.'),
           actions: [
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
                 await FirebaseAuth.instance.signOut();
                 if (!mounted) return;
-                Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
               },
               child: const Text('확인'),
-            )
+            ),
           ],
         ),
       );
     } catch (e) {
-      print('비밀번호 재설정 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('메일 전송 실패. 다시 시도해주세요.')),
+      );
     }
   }
 
@@ -116,41 +130,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
+    final isGoogleUser = user.providerData.any((info) => info.providerId == 'google.com');
+
     try {
       if (isGoogleUser) {
         final googleUser = await GoogleSignIn().signIn();
         final googleAuth = await googleUser?.authentication;
         final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth?.accessToken,
-          idToken: googleAuth?.idToken,
+          accessToken: googleAuth!.accessToken,
+          idToken: googleAuth.idToken,
         );
-        await user.reauthenticateWithCredential(credential);
-      } else {
-        final controller = TextEditingController();
-        await showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('비밀번호 확인'),
-            content: TextField(
-              controller: controller,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: '비밀번호 입력'),
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('확인')),
-            ],
-          ),
-        );
-        final password = controller.text.trim();
-        if (password.isEmpty) return;
-        final credential = EmailAuthProvider.credential(email: user.email!, password: password);
         await user.reauthenticateWithCredential(credential);
       }
 
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      final role = userDoc['role'];
-      final storeId = userDoc['storeId'];
+      final userData = userDoc.data();
+      final storeId = userData?['storeId'];
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
       if (role == 'owner' && storeId != null) {
@@ -159,25 +154,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       await user.delete();
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     } catch (e) {
-      print('계정 삭제 실패: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('계정 삭제에 실패했습니다.')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    const mainBlue = AppColors.primary;
+    final user = FirebaseAuth.instance.currentUser;
+    final isGoogleUser = user?.providerData.any((info) => info.providerId == 'google.com') ?? false;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('설정',
-            style: TextStyle(color: mainBlue, fontWeight: FontWeight.bold, fontSize: 24)),
+        title: const Text('설정', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 24)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: mainBlue),
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
-      backgroundColor: const Color(0xFFFBF7FF),
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -187,26 +185,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border.all(color: mainBlue.withOpacity(0.5)),
+                border: Border.all(color: AppColors.primary.withAlpha(128)),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
                   const CircleAvatar(
                     radius: 30,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                    backgroundColor: AppColors.background,
+                    child: Icon(Icons.person, size: 40, color: AppColors.primary),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('안녕하세요!',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: mainBlue)),
+                        const Text('안녕하세요!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
                         const SizedBox(height: 8),
-                        Text('$role $userName 님',
-                            style: const TextStyle(fontSize: 16, color: mainBlue)),
+                        Text('${_getRoleLabel(role)} $userName 님', style: const TextStyle(fontSize: 16, color: AppColors.primary)),
                       ],
                     ),
                   ),
@@ -215,18 +211,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 32),
 
-            if (role == '관리자') ...[
+            if (role == 'owner') ...[
               const Text('팀 초대', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ElevatedButton(
-                onPressed: _generateInviteCode,
-                style: ElevatedButton.styleFrom(backgroundColor: mainBlue),
-                child: const Text('초대코드 생성', style: TextStyle(color: Colors.white)),
-              ),
-              if (inviteCode.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text('초대코드: $inviteCode'),
+              const SizedBox(height: 8),
+              if (!isInviteCodeGenerated)
+                ElevatedButton(
+                  onPressed: _generateInviteCode,
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                  child: const Text('초대코드 생성', style: TextStyle(color: Colors.white)),
                 ),
+              if (inviteCode.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('초대코드: $inviteCode'),
+              ],
               const SizedBox(height: 24),
             ],
 
@@ -236,40 +233,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('재고 부족 알림 설정'),
               value: lowStockNotification,
               onChanged: (value) => setState(() => lowStockNotification = value),
-              activeColor: mainBlue,
+              activeColor: AppColors.primary,
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('다크 모드'),
-              value: darkMode,
-              onChanged: (value) => setState(() => darkMode = value),
-              activeColor: mainBlue,
-            ),
-
-            if (role == '관리자')
+            if (role != 'staff')
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('재고 최소 수량 설정'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MinStockListPage())),
               ),
+            Divider(thickness: 0.8, color: Colors.grey.shade300),
 
-            const Divider(height: 32),
-
+            const SizedBox(height: 24),
             const Text('매장 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('매장 변경'),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StoreChangePage())),
             ),
-            if (role == '관리자')
+            if (role == 'owner')
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('팀 관리'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamManagementScreen())),
               ),
+            Divider(thickness: 0.8, color: Colors.grey.shade300),
 
-            const Divider(height: 32),
-
+            const SizedBox(height: 24),
             const Text('개인/보안', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             if (!isGoogleUser)
               ListTile(
@@ -288,16 +277,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     content: const Text('정말로 계정을 삭제하시겠습니까?'),
                     actions: [
                       TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
-                      TextButton(onPressed: () {
-                        Navigator.pop(context);
-                        _deleteAccount();
-                      }, child: const Text('탈퇴')),
+                      TextButton(onPressed: () async { Navigator.pop(context); await _deleteAccount(); }, child: const Text('탈퇴')),
                     ],
                   ),
                 );
               },
             ),
-
             const SizedBox(height: 24),
 
             Center(
@@ -305,14 +290,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
                   if (!mounted) return;
-                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
                 },
                 child: const Text(
                   '로그아웃',
-                  style: TextStyle(color: Colors.grey, decoration: TextDecoration.underline),
+                  style: TextStyle(color: AppColors.borderDefault, decoration: TextDecoration.underline, fontSize: 14),
                 ),
               ),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
