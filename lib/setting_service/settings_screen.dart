@@ -266,13 +266,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: (value) => setState(() => lowStockNotification = value),
               activeColor: AppColors.primary,
             ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('재고 최소 수량 설정'),
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MinStockListPage()));
-              },
-            ),
+            if (role == '관리자')
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('재고 최소 수량 설정'),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const MinStockListPage()));
+                },
+              ),
             Divider(thickness: 0.8, color: Colors.grey.shade300),
 
             const SizedBox(height: 24),

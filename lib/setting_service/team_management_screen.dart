@@ -13,6 +13,7 @@ class TeamManagementScreen extends StatefulWidget {
 class _TeamManagementScreenState extends State<TeamManagementScreen> {
   List<Map<String, dynamic>> teamMembers = [];
   bool isLoading = true;
+  String? storeOwnerUid;
 
   @override
   void initState() {
@@ -26,6 +27,8 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
 
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc.data()?['storeId'];
+    final storeDoc = await FirebaseFirestore.instance.collection('stores').doc(storeId).get();
+    final ownerUid = storeDoc.data()?['ownerUid'];
 
     if (storeId == null) return;
 
@@ -39,17 +42,40 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
     for (var doc in querySnapshot.docs) {
       final data = doc.data();
       if (doc.id == uid) continue; // 자기 자신 제외
+
+      String roleText = '직원';
+      if (data['role'] == 'owner') {
+        roleText = (doc.id == ownerUid) ? '점주' : '매니저';
+      }
+
       members.add({
         'uid': doc.id,
         'name': data['name'] ?? '이름 없음',
-        'role': data['role'] == 'staff' ? '직원' : '관리자',
+        'role': data['role'],
+        'roleText': roleText,
       });
     }
 
     setState(() {
       teamMembers = members;
       isLoading = false;
+      storeOwnerUid = ownerUid;
     });
+  }
+
+  Future<void> _toggleManagerRole(String uid, String currentRole) async {
+    final newRole = currentRole == 'owner' ? 'staff' : 'owner'; // ⬅ 여기 바꿈!
+
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'role': newRole,
+      });
+      _loadTeamMembers(); // 새로고침
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('권한 변경 중 오류가 발생했습니다.')),
+      );
+    }
   }
 
   Future<void> _removeMember(String uid) async {
@@ -101,10 +127,25 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
           return ListTile(
             leading: const Icon(Icons.person, color: AppColors.primary),
             title: Text(member['name']),
-            subtitle: Text(member['role']),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: AppColors.error),
-              onPressed: () => _removeMember(member['uid']),
+            subtitle: Text(member['roleText']),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (member['uid'] != storeOwnerUid)
+                  IconButton(
+                    icon: Icon(
+                      member['role'] == 'owner' ? Icons.undo : Icons.star,
+                      color: member['role'] == 'owner' ? Colors.orange : Colors.grey,
+                    ),
+                    tooltip: member['role'] == 'owner' ? '직원으로 변경' : '매니저로 지정',
+                    onPressed: () => _toggleManagerRole(member['uid'], member['role']),
+                  ),
+                if (member['uid'] != storeOwnerUid)
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: AppColors.error),
+                    onPressed: () => _removeMember(member['uid']),
+                  ),
+              ],
             ),
           );
         },
