@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:refill/setting_service/team_management_screen.dart';
 import 'package:refill/setting_service/min_stock.dart';
+import 'package:refill/setting_service/store_change_page.dart'; //매장 변경
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -196,7 +197,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 24,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -214,7 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+                border: Border.all(color: AppColors.primary.withAlpha((0.5 * 255).toInt())),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -279,13 +280,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('매장 변경'),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const StoreChangePage()),
+                );
+              },
             ),
             if (role == '관리자')
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('팀 관리'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamManagementScreen()));
                 },
