@@ -94,17 +94,17 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 16),
 
               // 재고 부족 현황 보러가기 버튼
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFEFEF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: InkWell(
-                  onTap: () {
-                    print("전체 버튼 클릭됨");
-                  },
+              InkWell(
+                onTap: () {
+                  print("전체 버튼 클릭됨");
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFEFEF),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
