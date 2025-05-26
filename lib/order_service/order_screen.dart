@@ -13,42 +13,44 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   bool isAuto = false;
-  int selectedCategory = 1;
-  final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '컵', '기타'];
+  int selectedCategory = 0;
+  final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '티', '기타'];
 
   List<Map<String, dynamic>> items = [];
-
+  List<Map<String, dynamic>> filteredItems = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadOrderData();
+    _searchController.addListener(_filterItemsByCategory); // 검색어 변경 시 필터링
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadOrderData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    // 🔹 storeId 가져오기
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
 
-    // 🔹 orderTemplates(공통 발주 목록) 가져오기
     final orderTemplateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
-
-    // 🔹 매장의 stocks 데이터 가져오기
     final stockSnap = await FirebaseFirestore.instance
         .collection('stocks')
         .doc(storeId)
         .collection('items')
         .get();
 
-    // 🔹 stock 데이터를 Map으로 정리
     Map<String, dynamic> stockMap = {
       for (var doc in stockSnap.docs) doc.id: doc.data()
     };
 
-    // 🔹 두 개를 조합
     final combined = orderTemplateSnap.docs.map((doc) {
       final name = doc.id;
       final template = doc.data();
@@ -67,6 +69,20 @@ class _OrderScreenState extends State<OrderScreen> {
 
     setState(() {
       items = combined;
+      _filterItemsByCategory(); // 초기 필터링
+    });
+  }
+
+  void _filterItemsByCategory() {
+    final selected = categories[selectedCategory];
+    final keyword = _searchController.text.trim();
+
+    setState(() {
+      filteredItems = items.where((item) {
+        final matchCategory = item['category'] == selected;
+        final matchSearch = item['name'].toString().contains(keyword);
+        return matchCategory && matchSearch;
+      }).toList();
     });
   }
 
@@ -77,14 +93,12 @@ class _OrderScreenState extends State<OrderScreen> {
     final userDoc =
     await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
-
     final batch = FirebaseFirestore.instance.batch();
 
     for (var item in items) {
       final count = item['count'];
       final itemName = item['name'];
 
-      // 수량 0은 패스
       if (count <= 0) continue;
 
       final docRef = FirebaseFirestore.instance
@@ -93,7 +107,6 @@ class _OrderScreenState extends State<OrderScreen> {
           .collection('items')
           .doc(itemName);
 
-      // 기존 수량 읽어서 업데이트
       final docSnap = await docRef.get();
       final currentQty = (docSnap.data()?['quantity'] ?? 0) as int;
       final newQty = currentQty + count;
@@ -102,8 +115,6 @@ class _OrderScreenState extends State<OrderScreen> {
     }
 
     await batch.commit();
-
-    // 완료 후 다시 불러오기
     await _loadOrderData();
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -129,7 +140,6 @@ class _OrderScreenState extends State<OrderScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: ElevatedButton(
               onPressed: () {
-                // 재고 페이지 이동
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const StocksScreen()),
@@ -147,25 +157,25 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
         ],
       ),
-
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
-            // 🔍 검색창
+            // 검색창
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.primary),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.search, color: AppColors.primary),
-                  SizedBox(width: 8),
+                  const Icon(Icons.search, color: AppColors.primary),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
-                      decoration: InputDecoration(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: '검색',
                       ),
@@ -176,6 +186,7 @@ class _OrderScreenState extends State<OrderScreen> {
             ),
             const SizedBox(height: 16),
 
+            // 카테고리 버튼
             Table(
               border: TableBorder.all(color: AppColors.primary),
               children: [
@@ -189,13 +200,14 @@ class _OrderScreenState extends State<OrderScreen> {
             ),
 
             const SizedBox(height: 20),
-            // 📦 발주 항목 리스트
+
+            // 발주 리스트
             Expanded(
               child: ListView.separated(
-                itemCount: items.length,
+                itemCount: filteredItems.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {
-                  final item = items[index];
+                  final item = filteredItems[index];
                   final isShort = item['stock'] < item['min'];
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -242,10 +254,9 @@ class _OrderScreenState extends State<OrderScreen> {
                 },
               ),
             ),
-
             const SizedBox(height: 20),
 
-            // ✅ 발주 버튼
+            // 발주 버튼
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -260,10 +271,16 @@ class _OrderScreenState extends State<OrderScreen> {
       ),
     );
   }
+
   Widget _buildCategoryCell(int index) {
     final isSelected = selectedCategory == index;
     return GestureDetector(
-      onTap: () => setState(() => selectedCategory = index),
+      onTap: () {
+        setState(() {
+          selectedCategory = index;
+        });
+        _filterItemsByCategory();
+      },
       child: Container(
         height: 48,
         alignment: Alignment.center,
@@ -278,5 +295,4 @@ class _OrderScreenState extends State<OrderScreen> {
       ),
     );
   }
-
 }
