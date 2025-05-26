@@ -91,6 +91,7 @@ class _MainNavigationState extends State<MainNavigation> {
       backgroundColor: AppColors.background,
       body: _screens![_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: AppColors.background,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() => _currentIndex = index);
