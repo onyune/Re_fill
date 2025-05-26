@@ -10,11 +10,19 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   bool isAuto = false;
+
+  int selectedCategory = 1;
+  final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '컵', '기타'];
   final List<Map<String, dynamic>> items = [];
 
   void _addItem(String name) {
     setState(() {
-      items.add({'name': name, 'stock': 0, 'count': 1});
+      items.add({
+        'name': name,
+        'stock': 0,
+        'count': 1,
+        'category': categories[selectedCategory],
+      });
     });
   }
 
@@ -23,7 +31,6 @@ class _OrderScreenState extends State<OrderScreen> {
 
     showDialog(
       context: context,
-      barrierDismissible: true,
       builder: (context) {
         return AlertDialog(
           title: const Text('새 품목 추가'),
@@ -56,28 +63,51 @@ class _OrderScreenState extends State<OrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredItems = items
+        .where((item) => item['category'] == categories[selectedCategory])
+        .toList();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleSpacing: 20,
+        automaticallyImplyLeading: false,
         title: const Text(
           '발주',
           style: TextStyle(
             color: AppColors.primary,
-            fontWeight: FontWeight.bold,
             fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        iconTheme: const IconThemeData(color: AppColors.primary),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: ElevatedButton(
+              onPressed: () {
+                // 재고 페이지 이동
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: const Text('재고', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        ],
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           children: [
             // 검색창
             Container(
+              margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.primary),
@@ -98,45 +128,29 @@ class _OrderScreenState extends State<OrderScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
 
-            // 자동 발주 스위치
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // 표 형태 카테고리
+            Table(
+              border: TableBorder.all(color: AppColors.primary),
               children: [
-                const Text('자동 발주', style: TextStyle(fontSize: 16)),
-                Switch(
-                  value: isAuto,
-                  activeColor: AppColors.primary,
-                  onChanged: (value) {
-                    setState(() => isAuto = value);
-                  },
+                TableRow(
+                  children: List.generate(3, (i) => _buildCategoryCell(i)),
+                ),
+                TableRow(
+                  children: List.generate(3, (i) => _buildCategoryCell(i + 3)),
                 ),
               ],
             ),
 
-            // 스위치 활성화 안내 문구
-            if (isAuto)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '✅ 자동 발주 기능이 활성화되어 있습니다.',
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ),
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 10),
-
-            // 항목 리스트
+            // 품목 리스트
             Expanded(
               child: ListView.separated(
-                itemCount: items.length,
+                itemCount: filteredItems.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {
-                  final item = items[index];
+                  final item = filteredItems[index];
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -175,7 +189,7 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
 
-            // 리스트 추가 버튼
+            // 리스트 추가
             GestureDetector(
               onTap: _showAddItemDialog,
               child: const Align(
@@ -199,6 +213,25 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryCell(int index) {
+    final isSelected = selectedCategory == index;
+    return GestureDetector(
+      onTap: () => setState(() => selectedCategory = index),
+      child: Container(
+        height: 48,
+        alignment: Alignment.center,
+        color: isSelected ? AppColors.primary : Colors.white,
+        child: Text(
+          categories[index],
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
