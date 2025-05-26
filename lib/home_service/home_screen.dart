@@ -230,31 +230,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-
-              const SizedBox(height: 24),
-
-              // 재고 부족 현황
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: mainBlue),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('재고 부족 현황',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: mainBlue)),
-                    SizedBox(height: 8),
-                    Text('• 아이스티 파우더: 1개 남음', style: TextStyle(color: mainBlue)),
-                    Text('• 초코 파우더: 1개 남음', style: TextStyle(color: mainBlue)),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
             ],
           ),
         ),
