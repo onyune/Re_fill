@@ -45,6 +45,7 @@ dependencies:
   geolocator: ^10.1.0 #위치가져오기
   http: ^0.13.5 #날씨 API 호출
   table_calendar: ^3.0.9
+  intl: ^0.18.1  # 날씨API-> 5일 날씨 확인
 
 dev_dependencies:
   flutter_test:

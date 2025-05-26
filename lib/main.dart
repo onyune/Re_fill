@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'main_navigation.dart';
 
 import 'splash_screen.dart';
@@ -14,7 +15,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
+  await initializeDateFormatting('ko'); // 한국어 날짜 포맷 초기화
   // 알림 권한 요청
   NotificationSettings settings = await FirebaseMessaging.instance.requestPermission();
   print('🔔 알림 권한 상태: ${settings.authorizationStatus}');
