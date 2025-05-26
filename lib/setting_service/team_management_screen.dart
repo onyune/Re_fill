@@ -13,6 +13,8 @@ class TeamManagementScreen extends StatefulWidget {
 class _TeamManagementScreenState extends State<TeamManagementScreen> {
   List<Map<String, dynamic>> teamMembers = [];
   bool isLoading = true;
+  String currentUserRole = '';
+  String? currentUserUid;
 
   @override
   void initState() {
@@ -23,9 +25,11 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
   Future<void> _loadTeamMembers() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
+    currentUserUid = uid;
 
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc.data()?['storeId'];
+    currentUserRole = userDoc.data()?['role'] ?? 'staff';
 
     if (storeId == null) return;
 
@@ -42,13 +46,25 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
       members.add({
         'uid': doc.id,
         'name': data['name'] ?? '이름 없음',
-        'role': data['role'] == 'staff' ? '직원' : '관리자',
+        'role': data['role'] ?? 'staff',
       });
     }
 
     setState(() {
       teamMembers = members;
       isLoading = false;
+    });
+  }
+
+  Future<void> _toggleManagerRole(String uid, String currentRole) async {
+    final newRole = currentRole == 'manager' ? 'staff' : 'manager';
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({'role': newRole});
+
+    setState(() {
+      final index = teamMembers.indexWhere((m) => m['uid'] == uid);
+      if (index != -1) {
+        teamMembers[index]['role'] = newRole;
+      }
     });
   }
 
@@ -69,18 +85,30 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
 
     try {
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
-
       setState(() {
-        teamMembers.removeWhere((member) => member['uid'] == uid);
+        teamMembers.removeWhere((m) => m['uid'] == uid);
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('직원이 삭제되었습니다.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('직원이 삭제되었습니다.')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('삭제 중 오류가 발생했습니다.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('삭제 중 오류가 발생했습니다.')));
+    }
+  }
+
+  Icon _getStarIcon(String role) {
+    return Icon(
+      Icons.star,
+      color: role == 'manager' ? Colors.amber : Colors.grey,
+    );
+  }
+
+  String _getRoleLabel(String role) {
+    switch (role) {
+      case 'owner':
+        return '점주';
+      case 'manager':
+        return '매니저';
+      default:
+        return '직원';
     }
   }
 
@@ -98,14 +126,27 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
         itemCount: teamMembers.length,
         itemBuilder: (context, index) {
           final member = teamMembers[index];
+          final isOwner = member['role'] == 'owner';
+
           return ListTile(
             leading: const Icon(Icons.person, color: AppColors.primary),
             title: Text(member['name']),
-            subtitle: Text(member['role']),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: AppColors.error),
-              onPressed: () => _removeMember(member['uid']),
-            ),
+            subtitle: Text(_getRoleLabel(member['role'])),
+            trailing: currentUserRole == 'owner' && !isOwner
+                ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: _getStarIcon(member['role']),
+                  onPressed: () => _toggleManagerRole(member['uid'], member['role']),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: AppColors.error),
+                  onPressed: () => _removeMember(member['uid']),
+                ),
+              ],
+            )
+                : null,
           );
         },
       ),

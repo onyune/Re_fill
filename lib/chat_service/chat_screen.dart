@@ -81,8 +81,14 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String _getRoleEmoji(String role) {
-    if (role == 'owner') return '⭐ ';
-    return '';
+    switch (role) {
+      case 'owner':
+        return '⭐ '; // 점주 - 별모양
+      case 'manager':
+        return '💡 '; // 매니저 - 전구모양
+      default:
+        return '';    // 직원 - 없음
+    }
   }
 
   void _sendMessage() async {
