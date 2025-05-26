@@ -1,7 +1,8 @@
-// 홈화면 캘린더 위젯
+// 홈 화면 > 캘린더 위젯
+
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:refill/colors.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class HolidayCalendar extends StatefulWidget {
   const HolidayCalendar({super.key});

@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:refill/colors.dart';
-import 'package:refill/home_service/weather/weather_forecast_screen.dart';
+import 'package:http/http.dart' as http;
 
+import 'weather_forecast_screen.dart';
 
 class WeatherBox extends StatefulWidget {
   const WeatherBox({super.key});

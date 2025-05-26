@@ -1,4 +1,5 @@
-//재고부족 현황 보러가기 버튼
+// 홈 화면 > 재고부족 현황 보러가기 버튼
+
 import 'package:flutter/material.dart';
 
 class LowStockButton extends StatelessWidget {

@@ -1,8 +1,9 @@
-//매장명 & 로딩
+// 홈 화면 > 매장명 & 로딩
+
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:refill/colors.dart';
 
 class StoreHeader extends StatefulWidget {
   const StoreHeader({super.key});

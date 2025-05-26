@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
-import 'package:refill/home_service/store_header.dart';
-import 'package:refill/home_service/low_stock_button.dart';
-import 'package:refill/home_service/weather/weather_box.dart';
-import 'package:refill/home_service/holiday_calendar.dart';
-import 'package:refill/home_service/stock_recommendation_box.dart';
+
+import 'store_header.dart';
+import 'low_stock_button.dart';
+import 'weather/weather_box.dart';
+import 'holiday_calendar.dart';
+import 'stock_recommendation_box.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

@@ -1,4 +1,5 @@
-//발주예측추천 버튼
+// 홈 화면 > 하단 재고 예측 추천 버튼
+
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 
