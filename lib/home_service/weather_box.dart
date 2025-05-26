@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-
 import 'package:refill/colors.dart';
 
 class WeatherBox extends StatefulWidget {
@@ -16,6 +14,7 @@ class _WeatherBoxState extends State<WeatherBox> {
   String weather = '로딩 중...';
   String temperature = '';
   String humidity = '';
+  IconData weatherIcon = Icons.wb_sunny; // 기본 아이콘
 
   @override
   void initState() {
@@ -25,13 +24,20 @@ class _WeatherBoxState extends State<WeatherBox> {
 
   Future<void> loadWeather() async {
     try {
-      Position pos = await _getCurrentLocation();
-      final data = await _fetchWeather(pos.latitude, pos.longitude);
+      // 서울 고정 좌표
+      final double lat = 37.5665;
+      final double lon = 126.9780;
+
+      final data = await _fetchWeather(lat, lon);
+      final weatherMain = data['weather'][0]['main'];
+      final temp = data['main']['temp'];
+      final humid = data['main']['humidity'];
 
       setState(() {
         weather = data['weather'][0]['description'];
-        temperature = '${data['main']['temp']}°C';
-        humidity = '습도 ${data['main']['humidity']}%';
+        temperature = '${temp.toStringAsFixed(1)}°C';
+        humidity = '습도 $humid%';
+        weatherIcon = _getWeatherIcon(weatherMain);
       });
     } catch (e) {
       print("날씨 로딩 실패: $e");
@@ -39,30 +45,13 @@ class _WeatherBoxState extends State<WeatherBox> {
         weather = '불러오기 실패';
         temperature = '';
         humidity = '';
+        weatherIcon = Icons.error;
       });
     }
   }
 
-  Future<Position> _getCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) throw Exception('위치 서비스 꺼짐');
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception('위치 권한 거부됨');
-      }
-    }
-
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-      timeLimit: const Duration(seconds: 10),
-    );
-  }
-
   Future<Map<String, dynamic>> _fetchWeather(double lat, double lon) async {
-    const apiKey = '3a7bc2dc7a3b4025ce04a27e31923af7';
+    const apiKey = '3a7bc2dc7a3b4025ce04a27e31923af7'; // 보안상 실제 앱에선 숨겨야 함
     final url = Uri.parse(
         'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&lang=kr&appid=$apiKey');
 
@@ -74,12 +63,34 @@ class _WeatherBoxState extends State<WeatherBox> {
     }
   }
 
+  IconData _getWeatherIcon(String weatherMain) {
+    switch (weatherMain.toLowerCase()) {
+      case 'clear':
+        return Icons.wb_sunny;
+      case 'clouds':
+        return Icons.cloud;
+      case 'rain':
+        return Icons.grain;
+      case 'snow':
+        return Icons.ac_unit;
+      case 'thunderstorm':
+        return Icons.flash_on;
+      case 'drizzle':
+        return Icons.grain;
+      case 'mist':
+      case 'fog':
+        return Icons.blur_on;
+      default:
+        return Icons.wb_cloudy;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.wb_sunny, size: 32, color: AppColors.primary),
+        Icon(weatherIcon, size: 32, color: AppColors.primary),
         const SizedBox(height: 8),
         Text(weather, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
         Text(temperature, style: const TextStyle(color: AppColors.primary)),
