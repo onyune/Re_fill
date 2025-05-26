@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/order_service/stocks_screen.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -16,7 +17,7 @@ class _OrderScreenState extends State<OrderScreen> {
   final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '컵', '기타'];
 
   List<Map<String, dynamic>> items = [];
-  final TextEditingController _controller = TextEditingController();
+
 
   @override
   void initState() {
@@ -129,6 +130,10 @@ class _OrderScreenState extends State<OrderScreen> {
             child: ElevatedButton(
               onPressed: () {
                 // 재고 페이지 이동
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const StocksScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
