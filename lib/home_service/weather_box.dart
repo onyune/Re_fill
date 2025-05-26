@@ -36,7 +36,7 @@ class _WeatherBoxState extends State<WeatherBox> {
     } catch (e) {
       print("날씨 로딩 실패: $e");
       setState(() {
-        weather = '불러오기 실패';
+        weather = '날씨 불러오기 실패';
         temperature = '';
         humidity = '';
       });
@@ -64,13 +64,15 @@ class _WeatherBoxState extends State<WeatherBox> {
   Future<Map<String, dynamic>> _fetchWeather(double lat, double lon) async {
     const apiKey = '3a7bc2dc7a3b4025ce04a27e31923af7';
     final url = Uri.parse(
-        'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&lang=kr&appid=$apiKey');
+      'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&lang=kr&appid=$apiKey',
+    );
 
     final response = await http.get(url);
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('날씨 데이터 오류');
+      print("응답 오류: ${response.body}");
+      throw Exception('날씨 정보 불러오기 실패');
     }
   }
 
