@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/order_service/stocks_screen.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -12,38 +13,44 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   bool isAuto = false;
+  int selectedCategory = 0;
+  final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '티', '기타'];
+
   List<Map<String, dynamic>> items = [];
+  List<Map<String, dynamic>> filteredItems = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadOrderData();
+    _searchController.addListener(_filterItemsByCategory); // 검색어 변경 시 필터링
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadOrderData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    // 🔹 storeId 가져오기
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
 
-    // 🔹 orderTemplates(공통 발주 목록) 가져오기
     final orderTemplateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
-
-    // 🔹 매장의 stocks 데이터 가져오기
     final stockSnap = await FirebaseFirestore.instance
         .collection('stocks')
         .doc(storeId)
         .collection('items')
         .get();
 
-    // 🔹 stock 데이터를 Map으로 정리
     Map<String, dynamic> stockMap = {
       for (var doc in stockSnap.docs) doc.id: doc.data()
     };
 
-    // 🔹 두 개를 조합
     final combined = orderTemplateSnap.docs.map((doc) {
       final name = doc.id;
       final template = doc.data();
@@ -56,11 +63,26 @@ class _OrderScreenState extends State<OrderScreen> {
         'stock': stock?['quantity'] ?? 0,
         'min': stock?['minQuantity'] ?? 0,
         'count': 0,
+        'category': template['category'] ?? '기타',
       };
     }).toList();
 
     setState(() {
       items = combined;
+      _filterItemsByCategory(); // 초기 필터링
+    });
+  }
+
+  void _filterItemsByCategory() {
+    final selected = categories[selectedCategory];
+    final keyword = _searchController.text.trim();
+
+    setState(() {
+      filteredItems = items.where((item) {
+        final matchCategory = item['category'] == selected;
+        final matchSearch = item['name'].toString().contains(keyword);
+        return matchCategory && matchSearch;
+      }).toList();
     });
   }
 
@@ -71,14 +93,12 @@ class _OrderScreenState extends State<OrderScreen> {
     final userDoc =
     await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
-
     final batch = FirebaseFirestore.instance.batch();
 
     for (var item in items) {
       final count = item['count'];
       final itemName = item['name'];
 
-      // 수량 0은 패스
       if (count <= 0) continue;
 
       final docRef = FirebaseFirestore.instance
@@ -87,7 +107,6 @@ class _OrderScreenState extends State<OrderScreen> {
           .collection('items')
           .doc(itemName);
 
-      // 기존 수량 읽어서 업데이트
       final docSnap = await docRef.get();
       final currentQty = (docSnap.data()?['quantity'] ?? 0) as int;
       final newQty = currentQty + count;
@@ -96,8 +115,6 @@ class _OrderScreenState extends State<OrderScreen> {
     }
 
     await batch.commit();
-
-    // 완료 후 다시 불러오기
     await _loadOrderData();
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -118,29 +135,47 @@ class _OrderScreenState extends State<OrderScreen> {
             fontSize: 20,
           ),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        iconTheme: const IconThemeData(color: AppColors.primary),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const StocksScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: const Text('재고', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
-            // 🔍 검색창
+            // 검색창
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.primary),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.search, color: AppColors.primary),
-                  SizedBox(width: 8),
+                  const Icon(Icons.search, color: AppColors.primary),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
-                      decoration: InputDecoration(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: '검색',
                       ),
@@ -149,44 +184,30 @@ class _OrderScreenState extends State<OrderScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // 🔁 자동 발주 스위치
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // 카테고리 버튼
+            Table(
+              border: TableBorder.all(color: AppColors.primary),
               children: [
-                const Text('자동 발주', style: TextStyle(fontSize: 16)),
-                Switch(
-                  value: isAuto,
-                  activeColor: AppColors.primary,
-                  onChanged: (value) {
-                    setState(() => isAuto = value);
-                  },
+                TableRow(
+                  children: List.generate(3, (i) => _buildCategoryCell(i)),
+                ),
+                TableRow(
+                  children: List.generate(3, (i) => _buildCategoryCell(i + 3)),
                 ),
               ],
             ),
 
-            if (isAuto)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '✅ 자동 발주 기능이 활성화되어 있습니다.',
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ),
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 10),
-
-            // 📦 발주 항목 리스트
+            // 발주 리스트
             Expanded(
               child: ListView.separated(
-                itemCount: items.length,
+                itemCount: filteredItems.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {
-                  final item = items[index];
+                  final item = filteredItems[index];
                   final isShort = item['stock'] < item['min'];
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -233,10 +254,9 @@ class _OrderScreenState extends State<OrderScreen> {
                 },
               ),
             ),
-
             const SizedBox(height: 20),
 
-            // ✅ 발주 버튼
+            // 발주 버튼
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -247,6 +267,30 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryCell(int index) {
+    final isSelected = selectedCategory == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedCategory = index;
+        });
+        _filterItemsByCategory();
+      },
+      child: Container(
+        height: 48,
+        alignment: Alignment.center,
+        color: isSelected ? AppColors.primary : Colors.white,
+        child: Text(
+          categories[index],
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
