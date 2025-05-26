@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -77,7 +78,7 @@ class _MinStockListPageState extends State<MinStockListPage> {
         title: const Text(
           '최소 재고 설정',
           style: TextStyle(
-            color: Color(0xFF2563EB),
+            color: AppColors.primary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -97,7 +98,7 @@ class _MinStockListPageState extends State<MinStockListPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.remove, color: Color(0xFF2563EB)),
+                  icon: const Icon(Icons.remove, color: AppColors.primary),
                   onPressed: () {
                     setState(() {
                       if (item.minQuantity > 0) item.minQuantity--;
@@ -107,7 +108,7 @@ class _MinStockListPageState extends State<MinStockListPage> {
                 ),
                 Text('${item.minQuantity}', style: const TextStyle(fontSize: 16)),
                 IconButton(
-                  icon: const Icon(Icons.add, color: Color(0xFF2563EB)),
+                  icon: const Icon(Icons.add, color: AppColors.primary),
                   onPressed: () {
                     setState(() {
                       item.minQuantity++;

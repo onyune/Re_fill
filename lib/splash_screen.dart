@@ -1,8 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
-
-import 'dart:async';
-
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

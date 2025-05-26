@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 
 class StoreChangePage extends StatelessWidget {
   const StoreChangePage({super.key});
@@ -8,7 +9,7 @@ class StoreChangePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('매장 변경',
-        style: TextStyle(color: Color(0xFF2563EB),
+        style: TextStyle(color: AppColors.primary,
           fontWeight: FontWeight.bold,
           fontSize: 24,
         ),),

@@ -2,7 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
-import 'package:refill/setting_service/app_settings_section/min_stock.dart';
+
+import 'min_stock.dart';
 
 class AppSettingsSection extends StatelessWidget {
   final bool lowStockNotification;

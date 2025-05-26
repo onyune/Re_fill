@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'package:refill/colors.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:refill/login_service/login_screen.dart'; // 로그인 화면 import (이메일 인증 후 로그인화면으로 돌아가서 재로그인)
 
+import 'login_screen.dart';
 
 class FindIdScreen extends StatefulWidget {
   const FindIdScreen({super.key});

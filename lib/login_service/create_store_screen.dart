@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
-import '../main_navigation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/main_navigation.dart';
 
 class CreateStoreScreen extends StatelessWidget {
   const CreateStoreScreen({super.key});

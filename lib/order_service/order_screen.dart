@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:refill/order_service/stocks_screen.dart';
+
+import 'stocks_screen.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});

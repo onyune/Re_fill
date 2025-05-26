@@ -1,8 +1,9 @@
 // 설정 화면 > 매장 변경, 팀 관리
 
 import 'package:flutter/material.dart';
-import 'package:refill/setting_service/store_settings_section/store_change_page.dart';
-import 'package:refill/setting_service/store_settings_section/team_management_screen.dart';
+
+import 'store_change_page.dart';
+import 'team_management_screen.dart';
 
 class StoreSettingsSection extends StatelessWidget {
   final String role;
