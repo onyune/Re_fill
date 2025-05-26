@@ -87,17 +87,17 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 16),
 
               // 재고 부족 현황 보러가기 버튼
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFEFEF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: InkWell(
-                  onTap: () {
-                    print("전체 버튼 클릭됨");
-                  },
+              InkWell(
+                onTap: () {
+                  print("전체 버튼 클릭됨");
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFEFEF),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -117,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // 날씨 박스 (테두리는 HomeScreen에서만)
+              // 날씨 박스
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -219,6 +219,29 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // 재고 부족 현황
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: mainBlue),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('재고 부족 현황',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: mainBlue)),
+                    SizedBox(height: 8),
+                    Text('• 아이스티 파우더: 1개 남음', style: TextStyle(color: mainBlue)),
+                    Text('• 초코 파우더: 1개 남음', style: TextStyle(color: mainBlue)),
                   ],
                 ),
               ),
