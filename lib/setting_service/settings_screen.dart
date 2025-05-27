@@ -139,6 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
       if (role == 'owner' && storeId != null) {
         await FirebaseFirestore.instance.collection('stores').doc(storeId).delete();
+        await FirebaseFirestore.instance.collection('chatRooms').doc(storeId).delete();
       }
 
       await user.delete();
