@@ -117,7 +117,18 @@ class CreateStoreScreen extends StatelessWidget {
                       'minQuantity': 0,
                     });
                   }
+                  final messageRef = FirebaseFirestore.instance
+                      .collection('chatRooms')
+                      .doc(storeRef.id)
+                      .collection('messages')
+                      .doc();
 
+                  batch.set(messageRef, {
+                    'senderId': 'system',
+                    'text': '채팅방이 생성되었습니다.',
+                    'timestamp': FieldValue.serverTimestamp(),
+                    'readBy': [uid], // 최초 생성자 읽음 처리
+                  });
                   // 🔥 커밋
                   await batch.commit();
 
