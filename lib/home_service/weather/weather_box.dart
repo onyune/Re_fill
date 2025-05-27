@@ -4,6 +4,8 @@ import 'package:refill/colors.dart';
 import 'package:http/http.dart' as http;
 
 import 'weather_forecast_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:refill/providers/weather_provider.dart';
 
 class WeatherBox extends StatefulWidget {
   const WeatherBox({super.key});
@@ -30,10 +32,14 @@ class _WeatherBoxState extends State<WeatherBox> {
       final double lon = 126.8526;
 
       final data = await _fetchWeather(lat, lon);
-      final weatherMain = data['weather'][0]['main'];
+      final weatherMain = data['weather'][0]['main']; // 예: 'Clear', 'Rain', etc.
       final temp = data['main']['temp'];
       final humid = data['main']['humidity'];
       print('현재 습도: $humid');
+
+      // ✅ 날씨 상태를 Provider에 저장
+      Provider.of<WeatherProvider>(context, listen: false).updateWeather(weatherMain);
+
       setState(() {
         weather = data['weather'][0]['description'];
         temperature = '${temp.toStringAsFixed(1)}°C';

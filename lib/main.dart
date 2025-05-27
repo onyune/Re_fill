@@ -6,6 +6,9 @@ import 'main_navigation.dart';
 
 import 'splash_screen.dart';
 import 'login_service/login_screen.dart';
+import 'package:provider/provider.dart';
+import 'providers/weather_provider.dart';
+import 'providers/holiday_provider.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -31,7 +34,15 @@ void main() async {
   // FCM 토큰 출력
   _printFcmToken();
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProvider(create: (_) => HolidayProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 void _printFcmToken() async {
