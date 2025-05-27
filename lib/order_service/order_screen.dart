@@ -48,14 +48,14 @@ class _OrderScreenState extends State<OrderScreen> {
         .collection('items')
         .get();
 
-    Map<String, dynamic> stockMap = {
+    final stockMap = {
       for (var doc in stockSnap.docs) doc.id: doc.data()
     };
 
     final combined = orderTemplateSnap.docs.map((doc) {
       final name = doc.id;
       final template = doc.data();
-      final stock = stockMap[name];
+      final stock = stockMap[name.replaceAll(' ', '')]; // ← 이거 중요함!!!
 
       return {
         'name': name,
@@ -70,9 +70,10 @@ class _OrderScreenState extends State<OrderScreen> {
 
     setState(() {
       items = combined;
-      _filterItemsByCategory(); // 초기 필터링
+      _filterItemsByCategory(); // ✅ 필터링도 강제로 다시 해줘야 UI에 반영됨
     });
   }
+
 
   void _filterItemsByCategory() {
     final selected = categories[selectedCategory];
@@ -91,37 +92,46 @@ class _OrderScreenState extends State<OrderScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc =
-    await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
     final batch = FirebaseFirestore.instance.batch();
 
     for (var item in items) {
       final count = item['count'];
       final itemName = item['name'];
+      final currentQty = item['stock']; // 이미 로딩된 현재 재고 수량
 
       if (count <= 0) continue;
+
+      final newQty = currentQty + count;
+      final docId = itemName.replaceAll(' ', '');
 
       final docRef = FirebaseFirestore.instance
           .collection('stocks')
           .doc(storeId)
           .collection('items')
-          .doc(itemName);
+          .doc(docId);
 
-      final docSnap = await docRef.get();
-      final currentQty = (docSnap.data()?['quantity'] ?? 0) as int;
-      final newQty = currentQty + count;
-
-      batch.update(docRef, {'quantity': newQty});
+      batch.set(docRef, {
+        'quantity': newQty,
+      }, SetOptions(merge: true));
     }
 
-    await batch.commit();
-    await _loadOrderData();
+    try {
+      await batch.commit();
+      await _loadOrderData(); // UI 재갱신
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("발주가 완료되었습니다.")),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("발주가 완료되었습니다.")),
+      );
+    } catch (e) {
+      print("발주 중 오류 발생: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("발주 실패. 다시 시도해주세요.")),
+      );
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
