@@ -30,6 +30,7 @@ Future<List<Map<String, dynamic>>> getPredictedLowStockItems({
 
     final quantity = data['quantity'] ?? 0;
     final minQuantity = data['minQuantity'] ?? 0;
+    if (minQuantity == null || minQuantity <= 0) continue;
 
     int adjustment = 0;
     if (weatherMain == 'rain' || weatherMain == 'drizzle') adjustment += 2;
@@ -39,7 +40,7 @@ Future<List<Map<String, dynamic>>> getPredictedLowStockItems({
 
     if (quantity < predictedMin) {
       result.add({
-        'name': nameMap[itemId] ?? '이름없음', // 🔥 여기 핵심
+        'name': nameMap[itemId] ?? itemId, //이름이 없으면 doc.id로 대체
         'quantity': quantity,
         'predictedMin': predictedMin,
       });

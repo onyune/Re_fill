@@ -3,12 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'main_navigation.dart';
-
 import 'splash_screen.dart';
 import 'login_service/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/holiday_provider.dart';
+import 'providers/order_provider.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -39,6 +39,8 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
         ChangeNotifierProvider(create: (_) => HolidayProvider()),
+        ChangeNotifierProvider(create: (_) => OrderProvider()),
+
       ],
       child: const MyApp(),
     ),

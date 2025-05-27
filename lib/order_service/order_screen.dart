@@ -1,12 +1,14 @@
+// ✅ 이 파일은 발주 화면(OrderScreen)에서 외부에서 부족한 품목을 받아와 자동으로 수량(count)을 반영할 수 있도록 확장된 버전입니다.
+
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'stocks_screen.dart';
 
 class OrderScreen extends StatefulWidget {
-  const OrderScreen({super.key});
+  final Map<String, int>? prefilledCounts; // 🔹 외부에서 전달되는 품목:수량 데이터
+  const OrderScreen({super.key, this.prefilledCounts});
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
@@ -25,7 +27,7 @@ class _OrderScreenState extends State<OrderScreen> {
   void initState() {
     super.initState();
     _loadOrderData();
-    _searchController.addListener(_filterItemsByCategory); // 검색어 변경 시 필터링
+    _searchController.addListener(_filterItemsByCategory);
   }
 
   @override
@@ -55,7 +57,7 @@ class _OrderScreenState extends State<OrderScreen> {
     final combined = orderTemplateSnap.docs.map((doc) {
       final name = doc.id;
       final template = doc.data();
-      final stock = stockMap[name.replaceAll(' ', '')]; // ← 이거 중요함!!!
+      final stock = stockMap[name];
 
       return {
         'name': name,
@@ -63,17 +65,26 @@ class _OrderScreenState extends State<OrderScreen> {
         'defaultQuantity': template['defaultQuantity'] ?? 1,
         'stock': stock?['quantity'] ?? 0,
         'min': stock?['minQuantity'] ?? 0,
-        'count': 0,
+        'count': 0, // 이후에 prefilled로 덮어씀
         'category': template['category'] ?? '기타',
       };
     }).toList();
 
+    // 🔹 외부에서 전달된 count 반영
+    if (widget.prefilledCounts != null) {
+      for (final item in combined) {
+        final name = item['name'];
+        if (widget.prefilledCounts!.containsKey(name)) {
+          item['count'] = widget.prefilledCounts![name]!;
+        }
+      }
+    }
+
     setState(() {
       items = combined;
-      _filterItemsByCategory(); // ✅ 필터링도 강제로 다시 해줘야 UI에 반영됨
+      _filterItemsByCategory();
     });
   }
-
 
   void _filterItemsByCategory() {
     final selected = categories[selectedCategory];
@@ -99,12 +110,12 @@ class _OrderScreenState extends State<OrderScreen> {
     for (var item in items) {
       final count = item['count'];
       final itemName = item['name'];
-      final currentQty = item['stock']; // 이미 로딩된 현재 재고 수량
+      final currentQty = item['stock'];
 
       if (count <= 0) continue;
 
       final newQty = currentQty + count;
-      final docId = itemName.replaceAll(' ', '');
+      final docId = itemName;
 
       final docRef = FirebaseFirestore.instance
           .collection('stocks')
@@ -119,7 +130,8 @@ class _OrderScreenState extends State<OrderScreen> {
 
     try {
       await batch.commit();
-      await _loadOrderData(); // UI 재갱신
+      Navigator.pop(context, true);
+      await _loadOrderData();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("발주가 완료되었습니다.")),
@@ -131,7 +143,6 @@ class _OrderScreenState extends State<OrderScreen> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +183,6 @@ class _OrderScreenState extends State<OrderScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
-            // 검색창
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -196,23 +206,14 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // 카테고리 버튼
             Table(
               border: TableBorder.all(color: AppColors.primary),
               children: [
-                TableRow(
-                  children: List.generate(3, (i) => _buildCategoryCell(i)),
-                ),
-                TableRow(
-                  children: List.generate(3, (i) => _buildCategoryCell(i + 3)),
-                ),
+                TableRow(children: List.generate(3, (i) => _buildCategoryCell(i))),
+                TableRow(children: List.generate(3, (i) => _buildCategoryCell(i + 3))),
               ],
             ),
-
             const SizedBox(height: 20),
-
-            // 발주 리스트
             Expanded(
               child: ListView.separated(
                 itemCount: filteredItems.length,
@@ -266,8 +267,6 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // 발주 버튼
             SizedBox(
               width: double.infinity,
               height: 48,
