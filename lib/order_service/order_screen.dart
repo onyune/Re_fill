@@ -1,5 +1,3 @@
-// ✅ 이 파일은 발주 화면(OrderScreen)에서 외부에서 부족한 품목을 받아와 자동으로 수량(count)을 반영할 수 있도록 확장된 버전입니다.
-
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'stocks_screen.dart';
 
 class OrderScreen extends StatefulWidget {
-  final Map<String, int>? prefilledCounts; // 🔹 외부에서 전달되는 품목:수량 데이터
+  final Map<String, int>? prefilledCounts;
   const OrderScreen({super.key, this.prefilledCounts});
 
   @override
@@ -15,6 +13,8 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen> {
+  static Map<String, int> persistentCounts = {};
+
   bool isAuto = false;
   int selectedCategory = 0;
   final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '티', '기타'];
@@ -50,14 +50,22 @@ class _OrderScreenState extends State<OrderScreen> {
         .collection('items')
         .get();
 
-    final stockMap = {
-      for (var doc in stockSnap.docs) doc.id: doc.data()
-    };
+    final stockMap = { for (var doc in stockSnap.docs) doc.id: doc.data() };
 
     final combined = orderTemplateSnap.docs.map((doc) {
       final name = doc.id;
       final template = doc.data();
       final stock = stockMap[name];
+      int count = 0;
+
+      if (widget.prefilledCounts != null && widget.prefilledCounts!.containsKey(name)) {
+        count = widget.prefilledCounts![name]!;
+        persistentCounts[name] = count;
+      }
+
+      if (persistentCounts.containsKey(name)) {
+        count = persistentCounts[name]!;
+      }
 
       return {
         'name': name,
@@ -65,20 +73,10 @@ class _OrderScreenState extends State<OrderScreen> {
         'defaultQuantity': template['defaultQuantity'] ?? 1,
         'stock': stock?['quantity'] ?? 0,
         'min': stock?['minQuantity'] ?? 0,
-        'count': 0, // 이후에 prefilled로 덮어씀
+        'count': count,
         'category': template['category'] ?? '기타',
       };
     }).toList();
-
-    // 🔹 외부에서 전달된 count 반영
-    if (widget.prefilledCounts != null) {
-      for (final item in combined) {
-        final name = item['name'];
-        if (widget.prefilledCounts!.containsKey(name)) {
-          item['count'] = widget.prefilledCounts![name]!;
-        }
-      }
-    }
 
     setState(() {
       items = combined;
@@ -86,16 +84,28 @@ class _OrderScreenState extends State<OrderScreen> {
     });
   }
 
+  void _updateCount(String name, int count) {
+    setState(() {
+      final itemIndex = items.indexWhere((e) => e['name'] == name);
+      if (itemIndex != -1) items[itemIndex]['count'] = count;
+
+      final filteredIndex = filteredItems.indexWhere((e) => e['name'] == name);
+      if (filteredIndex != -1) filteredItems[filteredIndex]['count'] = count;
+
+      persistentCounts[name] = count;
+      filteredItems = List<Map<String, dynamic>>.from(filteredItems); // 강제 rebuild
+    });
+  }
+
   void _filterItemsByCategory() {
     final selected = categories[selectedCategory];
     final keyword = _searchController.text.trim();
-
     setState(() {
       filteredItems = items.where((item) {
         final matchCategory = item['category'] == selected;
         final matchSearch = item['name'].toString().contains(keyword);
         return matchCategory && matchSearch;
-      }).toList();
+      }).map((e) => Map<String, dynamic>.from(e)).toList();
     });
   }
 
@@ -111,17 +121,14 @@ class _OrderScreenState extends State<OrderScreen> {
       final count = item['count'];
       final itemName = item['name'];
       final currentQty = item['stock'];
-
       if (count <= 0) continue;
 
       final newQty = currentQty + count;
-      final docId = itemName;
-
       final docRef = FirebaseFirestore.instance
           .collection('stocks')
           .doc(storeId)
           .collection('items')
-          .doc(docId);
+          .doc(itemName);
 
       batch.set(docRef, {
         'quantity': newQty,
@@ -130,9 +137,14 @@ class _OrderScreenState extends State<OrderScreen> {
 
     try {
       await batch.commit();
-      Navigator.pop(context, true);
-      await _loadOrderData();
-
+      setState(() {
+        persistentCounts.clear();      // 먼저 초기화
+        for (final item in items) {
+          item['count'] = 0;           // UI에서도 0으로
+        }
+        _filterItemsByCategory();      // 필터링도 갱신
+      });
+      Navigator.pop(context, true);   // 화면 종료
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("발주가 완료되었습니다.")),
       );
@@ -151,12 +163,10 @@ class _OrderScreenState extends State<OrderScreen> {
       appBar: AppBar(
         title: const Text(
           '발주',
-          style: TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
+        backgroundColor: AppColors.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -169,9 +179,7 @@ class _OrderScreenState extends State<OrderScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               child: const Text('재고', style: TextStyle(color: Colors.white)),
@@ -227,16 +235,11 @@ class _OrderScreenState extends State<OrderScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            item['name'],
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
+                          Text(item['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
                           Text(
                             '현재재고 ${item['stock']} / 최소 ${item['min']}',
-                            style: TextStyle(
-                              color: isShort ? Colors.red : Colors.black54,
-                            ),
+                            style: TextStyle(color: isShort ? Colors.red : Colors.black54),
                           ),
                         ],
                       ),
@@ -245,18 +248,16 @@ class _OrderScreenState extends State<OrderScreen> {
                           IconButton(
                             icon: const Icon(Icons.remove, color: AppColors.primary),
                             onPressed: () {
-                              setState(() {
-                                if (item['count'] > 0) item['count']--;
-                              });
+                              final newCount = (item['count'] - 1).clamp(0, 99);
+                              _updateCount(item['name'], newCount);
                             },
                           ),
                           Text('${item['count']}', style: const TextStyle(fontSize: 16)),
                           IconButton(
                             icon: const Icon(Icons.add, color: AppColors.primary),
                             onPressed: () {
-                              setState(() {
-                                item['count']++;
-                              });
+                              final newCount = item['count'] + 1;
+                              _updateCount(item['name'], newCount);
                             },
                           ),
                         ],

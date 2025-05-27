@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/holiday_provider.dart';
 import 'providers/order_provider.dart';
-
+import 'home_service/low_stock_forecast_screen.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print("📩 백그라운드 메시지 도착: ${message.notification?.title}");
@@ -65,6 +65,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/main': (context) => const MainNavigation(),
+        '/lowStockForecast': (context) => const LowStockForecastScreen(),
       },
     );
   }

@@ -7,6 +7,7 @@ import 'weather/weather_box.dart';
 import 'holiday_calendar.dart';
 import 'stock_recommendation_box.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

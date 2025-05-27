@@ -1,7 +1,7 @@
 // 홈 화면 > 재고부족 현황 보러가기 버튼
 
 import 'package:flutter/material.dart';
-import 'package:refill/home_service/low_stock_forecast_screen.dart';
+import 'package:refill/home_service/low_stock_screen.dart';
 
 class LowStockButton extends StatelessWidget {
   final VoidCallback? onTap;
@@ -13,7 +13,7 @@ class LowStockButton extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const LowStockForecastScreen()),
+          MaterialPageRoute(builder: (_) => const LowStockScreen()),
         );
       },
       child: Container(

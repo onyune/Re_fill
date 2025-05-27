@@ -38,13 +38,13 @@ Future<List<Map<String, dynamic>>> getPredictedLowStockItems({
 
     final predictedMin = minQuantity + adjustment;
 
-    if (quantity < predictedMin) {
-      result.add({
-        'name': nameMap[itemId] ?? itemId, //이름이 없으면 doc.id로 대체
-        'quantity': quantity,
-        'predictedMin': predictedMin,
-      });
-    }
+
+    result.add({
+      'name': nameMap[itemId] ?? itemId, //이름이 없으면 doc.id로 대체
+      'quantity': quantity,
+       'predictedMin': predictedMin,
+    });
+
   }
 
   return result;
