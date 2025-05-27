@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -43,6 +44,8 @@ dependencies:
   firebase_messaging: ^14.6.5
   geolocator: ^10.1.0 #위치가져오기
   http: ^0.13.5 #날씨 API 호출
+  table_calendar: ^3.0.9
+  intl: ^0.18.1  # 날씨API-> 5일 날씨 확인
 
 dev_dependencies:
   flutter_test:
@@ -63,7 +66,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/google_logo.png
-    - assets/images/
+    - assets/images/create_store.png
+    - assets/images/invite_code.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

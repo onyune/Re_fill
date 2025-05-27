@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
-import '../main_navigation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/main_navigation.dart';
 
 class CreateStoreScreen extends StatelessWidget {
   const CreateStoreScreen({super.key});
@@ -68,7 +68,12 @@ class CreateStoreScreen extends StatelessWidget {
 
                   final fullStoreName = '$prefix 커피 $suffix 점';
 
-                  final storeRef = await FirebaseFirestore.instance.collection('stores').add({
+                  // 🔥 batch 시작
+                  final batch = FirebaseFirestore.instance.batch();
+
+                  // 🔹 store 생성
+                  final storeRef = FirebaseFirestore.instance.collection('stores').doc();
+                  batch.set(storeRef, {
                     'storeName': fullStoreName,
                     'storeNamePrefix': prefix,
                     'storeNameSuffix': suffix,
@@ -79,11 +84,58 @@ class CreateStoreScreen extends StatelessWidget {
                     'storeType': '카페',
                   });
 
-                  await FirebaseFirestore.instance.collection('users').doc(uid).update({
+                  // 🔹 chatRoom 생성
+                  final chatRoomRef = FirebaseFirestore.instance.collection('chatRooms').doc(storeRef.id);
+                  batch.set(chatRoomRef, {
+                    'storeId': storeRef.id,
+                    'ownerId': uid,
+                    'managerId': null,
+                    'members': [uid],
+                  });
+
+                  // 🔹 사용자 문서 업데이트
+                  final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+                  batch.update(userRef, {
                     'storeId': storeRef.id,
                     'role': 'owner',
                     'createdAt': FieldValue.serverTimestamp(),
                   });
+
+                  // 🔹 orderTemplates 가져와서 stocks 문서 생성
+                  final templateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
+                  for (final doc in templateSnap.docs) {
+                    final itemName = doc.id; // 실제 이름
+                    final docId = itemName.replaceAll(' ', ''); // 공백 제거한 ID
+
+                    final stockRef = FirebaseFirestore.instance
+                        .collection('stocks')
+                        .doc(storeRef.id)
+                        .collection('items')
+                        .doc(docId);
+
+                    batch.set(stockRef, {
+                      'name': itemName, // 이름은 그대로 저장
+                      'quantity': 0,
+                      'minQuantity': 0,
+                    });
+                  }
+
+                  // 🔹 chatRooms/messages 초기 메시지
+                  final messageRef = FirebaseFirestore.instance
+                      .collection('chatRooms')
+                      .doc(storeRef.id)
+                      .collection('messages')
+                      .doc();
+
+                  batch.set(messageRef, {
+                    'senderId': 'system',
+                    'text': '채팅방이 생성되었습니다.',
+                    'timestamp': FieldValue.serverTimestamp(),
+                    'readBy': [uid],
+                  });
+
+                  // 🔥 커밋
+                  await batch.commit();
 
                   Navigator.pushAndRemoveUntil(
                     context,
