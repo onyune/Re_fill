@@ -1,48 +1,106 @@
-// 홈 화면 > 하단 재고 예측 추천 버튼
-
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:refill/home_service/weather/stock_forecast.dart';
+import 'package:provider/provider.dart';
+import 'package:refill/providers/weather_provider.dart';
+import 'package:refill/providers/holiday_provider.dart';
 import 'package:refill/colors.dart';
+import 'low_stock_forecast_screen.dart';
 
-class StockRecommendationBox extends StatelessWidget {
+class StockRecommendationBox extends StatefulWidget {
   const StockRecommendationBox({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final mainBlue = AppColors.primary;
+  State<StockRecommendationBox> createState() => _StockRecommendationBoxState();
+}
 
+class _StockRecommendationBoxState extends State<StockRecommendationBox> {
+  List<String> recommendations = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecommendations();
+  }
+
+  Future<void> _loadRecommendations() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final storeId = userDoc['storeId'];
+
+    // 테스트 강제 지정 가능
+    final weatherMain = Provider.of<WeatherProvider>(context, listen: false).weatherMain;
+    final isHoliday = Provider.of<HolidayProvider>(context, listen: false).isTodayHoliday;
+    //final weatherMain = 'rain';
+    //final isHoliday = true;
+
+
+    final items = await getPredictedLowStockItems(
+      storeId: storeId,
+      weatherMain: weatherMain,
+      isHoliday: isHoliday,
+    );
+
+    // 🔍 디버깅 로그 찍기
+    for (final item in items) {
+      print("✅ 예측 확인: ${item['name']}, 수량 ${item['quantity']} / 필요 ${item['predictedMin']}");
+    }
+
+    final filtered = items.where((item) {
+      final q = item['quantity'];
+      final min = item['predictedMin'];
+      return q is int && min is int && q < min;
+    }).toList();
+
+    print("📦 최종 필터링 결과: ${filtered.map((e) => e['name'])}");
+
+    setState(() {
+      recommendations = filtered.map((e) => e['name'].toString()).toList();
+      isLoading = false;
+    });
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        border: Border.all(color: AppColors.primary),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: mainBlue),
       ),
-      child: Column(
+      child: isLoading
+          ? const CircularProgressIndicator()
+          : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('재고 예측 추천',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
+          const Text(
+            '재고 예측 추천',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          const Text('오늘 아이스류 소비 증가 예상!', style: TextStyle(color: AppColors.primary)),
-          const SizedBox(height: 4),
-          const Text('• 아이스 아메리카노', style: TextStyle(color: AppColors.primary)),
-          const Text('• 얼음컵 등', style: TextStyle(color: AppColors.primary)),
-          const SizedBox(height: 16),
+          recommendations.isEmpty
+              ? const Text('예상 부족 품목 없음')
+              : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: recommendations.map((name) => Text('• $name')).toList(),
+          ),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.add_shopping_cart),
-              label: const Text('발주에 추가'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: mainBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LowStockForecastScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('예측 상세보기', style: TextStyle(color: Colors.white)),
             ),
           ),
         ],
