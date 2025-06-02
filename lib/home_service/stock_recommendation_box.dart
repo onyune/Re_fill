@@ -39,7 +39,7 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
     //final weatherMain = 'rain';
     //final isHoliday = true;
 
-    final items = await getPredictedLowStockItems(
+    final items = await getPredictedStockRecommendations(
       storeId: storeId,
       weatherMain: weatherMain,
       isHoliday: isHoliday,
