@@ -109,6 +109,48 @@ class _OrderScreenState extends State<OrderScreen> {
     });
   }
 
+  Future<void> _confirmAndPlaceOrder() async {
+    final selectedItems = items.where((item) => item['count'] > 0).toList();
+
+    if (selectedItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("발주할 품목이 없습니다.")),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("발주 확인"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("다음 품목을 발주하시겠습니까?\n"),
+                ...selectedItems.map((item) => Text(
+                  '• ${item['name']} (${item['count']}개)',
+                  style: const TextStyle(fontSize: 14),
+                )),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("취소")),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("확인")),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _placeOrder();
+    }
+  }
+
   Future<void> _placeOrder() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -137,6 +179,9 @@ class _OrderScreenState extends State<OrderScreen> {
 
     try {
       await batch.commit();
+
+      await _loadOrderData();
+
       setState(() {
         persistentCounts.clear();      // 먼저 초기화
         for (final item in items) {
@@ -144,10 +189,11 @@ class _OrderScreenState extends State<OrderScreen> {
         }
         _filterItemsByCategory();      // 필터링도 갱신
       });
-      Navigator.pop(context, true);   // 화면 종료
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("발주가 완료되었습니다.")),
       );
+
     } catch (e) {
       print("발주 중 오류 발생: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -273,7 +319,7 @@ class _OrderScreenState extends State<OrderScreen> {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                onPressed: _placeOrder,
+                onPressed: _confirmAndPlaceOrder,
                 child: const Text('발주하기', style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),
