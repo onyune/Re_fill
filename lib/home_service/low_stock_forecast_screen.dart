@@ -33,11 +33,18 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
     final storeId = userDoc['storeId'];
 
     final items = await getPredictedStockRecommendations(storeId: storeId);
+    final filtered = items.where((item) {
+      final q = item['quantity'];
+      final need = item['predictedNeed'];
+      if (q is! int || need is! int || need == 0) return false;
+
+      final shortageRate = (need - q) / need;
+      return shortageRate >= 0.3; // 30% 이상 부족한 경우만
+    }).toList();
 
     setState(() {
-      forecastSummary = '📊 내일 수요를 기반으로 한 자동 발주 추천입니다.\n'
-          '예상 수요보다 적은 품목에 대해 발주를 제안합니다.';
-      predictedItems = items;
+      forecastSummary = '📊 내일 수요를 기반으로 한 자동 발주 추천입니다.\n예상 수요보다 적은 품목에 대해 발주를 제안합니다.';
+      predictedItems = filtered;
       isLoading = false;
     });
   }
@@ -47,8 +54,7 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
         .where((item) => selectedItems.contains(item['name']))
         .toList();
     for (var item in selected) {
-      customCounts[item['name']] =
-          (item['recommendedExtra']).clamp(1, 99);
+      customCounts[item['name']] = (item['recommendedExtra']).clamp(1, 99);
     }
 
     showDialog(
@@ -58,36 +64,45 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
           builder: (context, setStateDialog) {
             return AlertDialog(
               title: const Text('발주 수량 확인'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: selected.map((item) {
-                  final name = item['name'];
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(child: Text(name)),
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: () {
-                          setStateDialog(() {
-                            customCounts[name] =
-                                (customCounts[name]! - 1).clamp(1, 99);
-                          });
-                        },
-                      ),
-                      Text('${customCounts[name]}개'),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () {
-                          setStateDialog(() {
-                            customCounts[name] =
-                                (customCounts[name]! + 1).clamp(1, 99);
-                          });
-                        },
-                      ),
-                    ],
-                  );
-                }).toList(),
+              content: SizedBox(
+                // 화면 높이의 60% 정도까지만 쓰게 제한
+                height: MediaQuery.of(context).size.height * 0.6,
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: selected.map((item) {
+                      final name = item['name'];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(child: Text(name)),
+                            IconButton(
+                              icon: const Icon(Icons.remove),
+                              onPressed: () {
+                                setStateDialog(() {
+                                  customCounts[name] =
+                                      (customCounts[name]! - 1).clamp(1, 99);
+                                });
+                              },
+                            ),
+                            Text('${customCounts[name]}개'),
+                            IconButton(
+                              icon: const Icon(Icons.add),
+                              onPressed: () {
+                                setStateDialog(() {
+                                  customCounts[name] =
+                                      (customCounts[name]! + 1).clamp(1, 99);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
               actions: [
                 TextButton(
@@ -115,11 +130,6 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
     );
   }
 
-  Color _getRiskColor(int quantity, int predictedNeed) {
-    if (quantity < predictedNeed * 0.5) return Colors.redAccent;
-    if (quantity < predictedNeed) return Colors.orange;
-    return Colors.black87;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -162,10 +172,7 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
                 return CheckboxListTile(
                   title: Text(
                     name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _getRiskColor(quantity, predicted),
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text("현재 $quantity개 / 예측 필요 $predicted개"),
                   value: selectedItems.contains(name),
