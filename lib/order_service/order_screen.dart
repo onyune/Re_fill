@@ -81,8 +81,8 @@ class _OrderScreenState extends State<OrderScreen> {
 
     setState(() {
       items = combined;
-      _filterItemsByCategory();
     });
+    Future.delayed(Duration.zero, _filterItemsByCategory); // 안전하게 분리 실행
   }
 
   void _updateCount(String name, int count) {
@@ -194,6 +194,7 @@ class _OrderScreenState extends State<OrderScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("발주가 완료되었습니다.")),
       );
+      Navigator.pop(context, 'ordered');
 
     } catch (e) {
       print("발주 중 오류 발생: $e");

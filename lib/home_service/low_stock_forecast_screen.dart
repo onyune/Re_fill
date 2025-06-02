@@ -111,14 +111,16 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    await Navigator.push(
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            OrderScreen(prefilledCounts: customCounts),
+                        builder: (_) => OrderScreen(prefilledCounts: customCounts),
                       ),
                     );
-                    loadForecastData(); // 돌아와서 다시 로드
+
+                    if (result == 'ordered') {
+                      loadForecastData(); // 발주한 경우에만 재로딩
+                    }
                   },
                   child: const Text('추가하기'),
                 ),
