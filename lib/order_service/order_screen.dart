@@ -13,8 +13,6 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen> {
-  static Map<String, int> persistentCounts = {};
-
   bool isAuto = false;
   int selectedCategory = 0;
   final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '티', '기타'];
@@ -43,11 +41,14 @@ class _OrderScreenState extends State<OrderScreen> {
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
 
-    final orderTemplateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
     final stockSnap = await FirebaseFirestore.instance
         .collection('stocks')
         .doc(storeId)
         .collection('items')
+        .get();
+
+    final orderTemplateSnap = await FirebaseFirestore.instance
+        .collection('orderTemplates')
         .get();
 
     final stockMap = { for (var doc in stockSnap.docs) doc.id: doc.data() };
@@ -60,11 +61,9 @@ class _OrderScreenState extends State<OrderScreen> {
 
       if (widget.prefilledCounts != null && widget.prefilledCounts!.containsKey(name)) {
         count = widget.prefilledCounts![name]!;
-        persistentCounts[name] = count;
-      }
-
-      if (persistentCounts.containsKey(name)) {
-        count = persistentCounts[name]!;
+      } else {
+        // 항상 최신 stock 기준으로 초기화
+        count = 0;
       }
 
       return {
@@ -92,7 +91,6 @@ class _OrderScreenState extends State<OrderScreen> {
       final filteredIndex = filteredItems.indexWhere((e) => e['name'] == name);
       if (filteredIndex != -1) filteredItems[filteredIndex]['count'] = count;
 
-      persistentCounts[name] = count;
       filteredItems = List<Map<String, dynamic>>.from(filteredItems); // 강제 rebuild
     });
   }
@@ -130,7 +128,7 @@ class _OrderScreenState extends State<OrderScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("다음 품목을 발주하시겠습니까?\n"),
+                const Text("선택한 품목들로 발주를 진행할까요?\n"),
                 ...selectedItems.map((item) => Text(
                   '• ${item['name']} (${item['count']}개)',
                   style: const TextStyle(fontSize: 14),
@@ -183,7 +181,6 @@ class _OrderScreenState extends State<OrderScreen> {
       await _loadOrderData();
 
       setState(() {
-        persistentCounts.clear();      // 먼저 초기화
         for (final item in items) {
           item['count'] = 0;           // UI에서도 0으로
         }
@@ -217,11 +214,15 @@ class _OrderScreenState extends State<OrderScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const StocksScreen()),
                 );
+
+                if (result == 'updated') {
+                  _loadOrderData();
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
