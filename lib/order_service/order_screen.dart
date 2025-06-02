@@ -78,7 +78,7 @@ class _OrderScreenState extends State<OrderScreen> {
           '발주',
           style: TextStyle(
             color: AppColors.primary,
-            fontSize: 20,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
