@@ -66,7 +66,10 @@ class _LowStockScreenState extends State<LowStockScreen> {
       MaterialPageRoute(
         builder: (_) => OrderScreen(prefilledCounts: counts),
       ),
-    );
+    ).then((_) {
+      // OrderScreen에서 돌아왔을 때 재고 다시 불러오기
+      loadData();
+    });
   }
 
   @override
