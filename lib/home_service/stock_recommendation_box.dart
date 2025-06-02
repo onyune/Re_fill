@@ -18,6 +18,7 @@ class StockRecommendationBox extends StatefulWidget {
 class _StockRecommendationBoxState extends State<StockRecommendationBox> {
   List<String> recommendations = [];
   bool isLoading = true;
+  String summaryText = '';
 
   @override
   void initState() {
@@ -38,7 +39,6 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
     //final weatherMain = 'rain';
     //final isHoliday = true;
 
-
     final items = await getPredictedLowStockItems(
       storeId: storeId,
       weatherMain: weatherMain,
@@ -58,8 +58,17 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
 
     print("📦 최종 필터링 결과: ${filtered.map((e) => e['name'])}");
 
+    String mood = isHoliday
+        ? '오늘은 공휴일이라 손님이 많을 것으로 예상돼요!'
+        : (['맑음', 'sunny', 'clear', '더움'].contains(weatherMain.toLowerCase())
+          ? '오늘은 날씨가 좋아 손님이 많을 것으로 보여요!'
+          : '오늘은 날씨가 흐려 비교적 조용할 수 있어요.');
+
     setState(() {
       recommendations = filtered.map((e) => e['name'].toString()).toList();
+      summaryText = recommendations.isEmpty
+          ? '지금은 재고가 충분해 보여요!'
+          : '$mood\n예상 수요를 반영한 추천 품목이에요.';
       isLoading = false;
     });
   }
@@ -82,12 +91,31 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
             '재고 예측 추천',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
+          const SizedBox(height: 4),
+          Text(
+            summaryText,
+            style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+                height: 1.5,
+            ),
+          ),
           const SizedBox(height: 8),
           recommendations.isEmpty
-              ? const Text('예상 부족 품목 없음')
+              ? const Text('예상 부족 품목 없음',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                )
               : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: recommendations.map((name) => Text('• $name')).toList(),
+            children: recommendations.map((name) => Row(
+              children: [
+                const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(name, style: const TextStyle(fontSize: 14)),
+              ],
+            )).toList(),
           ),
           const SizedBox(height: 12),
           SizedBox(
