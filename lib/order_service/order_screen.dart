@@ -38,7 +38,9 @@ class _OrderScreenState extends State<OrderScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid).get();
     final storeId = userDoc['storeId'];
 
     final stockSnap = await FirebaseFirestore.instance
@@ -153,7 +155,9 @@ class _OrderScreenState extends State<OrderScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid).get();
     final storeId = userDoc['storeId'];
     final batch = FirebaseFirestore.instance.batch();
 

@@ -1,7 +1,7 @@
 // 날씨/공휴일 조건에 따라 재고 부족 품목을 예측하는 유틸 함수
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-Future<List<Map<String, dynamic>>> getPredictedLowStockItems({
+Future<List<Map<String, dynamic>>> getPredictedStockRecommendations({
   required String storeId,
   required String weatherMain,
   required bool isHoliday,
@@ -16,7 +16,7 @@ Future<List<Map<String, dynamic>>> getPredictedLowStockItems({
       .collection('orderTemplates')
       .get();
 
-  // 🔸 orderTemplates 기준 name 매핑
+  // orderTemplates 기준 name 매핑
   final Map<String, String> nameMap = {
     for (var doc in templateSnap.docs)
       doc.id: (doc.data()['name'] ?? '이름없음') as String
@@ -30,21 +30,24 @@ Future<List<Map<String, dynamic>>> getPredictedLowStockItems({
 
     final quantity = data['quantity'] ?? 0;
     final minQuantity = data['minQuantity'] ?? 0;
-    if (minQuantity == null || minQuantity <= 0) continue;
 
-    int adjustment = 0;
-    if (weatherMain == 'rain' || weatherMain == 'drizzle') adjustment += 2;
-    if (isHoliday) adjustment += 1;
+    int demandBoost = 0;
+    if (weatherMain == 'clear' || weatherMain == 'hot') demandBoost += 2;
+    else if (weatherMain == 'rain' || weatherMain == 'snow') demandBoost += 0;
+    else demandBoost += 1;
 
-    final predictedMin = minQuantity + adjustment;
+    if (isHoliday) demandBoost += 2;
+
+    final predictedNeed = minQuantity + demandBoost;
 
 
     result.add({
-      'name': nameMap[itemId] ?? itemId, //이름이 없으면 doc.id로 대체
+      'name': nameMap[itemId] ?? itemId,
       'quantity': quantity,
-       'predictedMin': predictedMin,
+      'minQuantity': minQuantity,
+      'predictedNeed': predictedNeed,
+      'recommendedExtra': (predictedNeed - quantity).clamp(0, 99),
     });
-
   }
 
   return result;

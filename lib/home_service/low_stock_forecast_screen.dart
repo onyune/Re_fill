@@ -1,4 +1,3 @@
-//재고예측 상세보기 버튼 클릭시 나타나는 화면
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -39,7 +38,7 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
     final weatherMain = Provider.of<WeatherProvider>(context, listen: false).weatherMain;
     final isHoliday = Provider.of<HolidayProvider>(context, listen: false).isTodayHoliday;
 
-    final items = await getPredictedLowStockItems(
+    final items = await getPredictedStockRecommendations(
       storeId: storeId,
       weatherMain: weatherMain,
       isHoliday: isHoliday,
@@ -60,24 +59,19 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
       }
     }
 
-    summary += '\n🔎 아래 품목들의 추가 발주를 추천합니다.';
+    summary += '\n🔎 내일 수요 증가가 예상되는 품목들입니다.\n예상 수요보다 적게 보유한 경우 발주를 추천합니다.';
 
     setState(() {
       forecastSummary = summary;
       predictedItems = items;
       isLoading = false;
     });
-    print("🌟 예측된 품목 수: ${items.length}");
-    for (var item in items) {
-      print("▶ ${item['name']} / 수량: ${item['quantity']} / 예측필요: ${item['predictedMin']}");
-    }
-
   }
 
   void _showConfirmationDialog() {
     final selected = predictedItems.where((item) => selectedItems.contains(item['name'])).toList();
     for (var item in selected) {
-      customCounts[item['name']] = (item['predictedMin'] - item['quantity']).clamp(1, 99);
+      customCounts[item['name']] = (item['predictedNeed'] - item['quantity']).clamp(1, 99);
     }
 
     showDialog(
@@ -121,18 +115,13 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
                 child: const Text('취소'),
               ),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Future.delayed(Duration.zero, () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => OrderScreen(prefilledCounts: customCounts),
-                      ),
-                    );
-                  });
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => OrderScreen(prefilledCounts: customCounts)),
+                  );
+                  loadForecastData();
                 },
-
                 child: const Text('추가하기'),
               ),
             ],
@@ -140,6 +129,12 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
         });
       },
     );
+  }
+
+  Color _getRiskColor(int quantity, int predictedNeed) {
+    if (quantity < predictedNeed * 0.5) return Colors.redAccent;
+    if (quantity < predictedNeed) return Colors.orange;
+    return Colors.black87;
   }
 
   @override
@@ -156,23 +151,43 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(forecastSummary, style: const TextStyle(fontSize: 14)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(forecastSummary, style: const TextStyle(fontSize: 14)),
+                const SizedBox(height: 8),
+                const Text(
+                  '※ 예측 수요는 날씨/공휴일/요일 정보를 기반으로 계산됩니다.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: ListView.builder(
               itemCount: predictedItems.length,
               itemBuilder: (context, i) {
                 final item = predictedItems[i];
+                final name = item['name'];
+                final quantity = item['quantity'];
+                final predicted = item['predictedNeed'];
+
                 return CheckboxListTile(
-                  title: Text(item['name']),
-                  subtitle: Text("현재 ${item['quantity']}개 / 예측 필요 ${item['predictedMin']}개"),
-                  value: selectedItems.contains(item['name']),
+                  title: Text(
+                    name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _getRiskColor(quantity, predicted),
+                    ),
+                  ),
+                  subtitle: Text("현재 $quantity개 / 예측 필요 $predicted개"),
+                  value: selectedItems.contains(name),
                   onChanged: (val) {
                     setState(() {
                       if (val == true) {
-                        selectedItems.add(item['name']);
+                        selectedItems.add(name);
                       } else {
-                        selectedItems.remove(item['name']);
+                        selectedItems.remove(name);
                       }
                     });
                   },
@@ -182,10 +197,23 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
           ),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              onPressed: selectedItems.isEmpty ? null : _showConfirmationDialog,
-              child: const Text('발주 목록에 추가하기', style: TextStyle(color: Colors.white)),
+            child: Column(
+              children: [
+                if (selectedItems.isNotEmpty)
+                  Text(
+                    '${selectedItems.length}개 선택됨',
+                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                    onPressed: selectedItems.isEmpty ? null : _showConfirmationDialog,
+                    child: const Text('발주 목록에 추가하기', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
             ),
           )
         ],
