@@ -3,10 +3,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'main_navigation.dart';
-
 import 'splash_screen.dart';
 import 'login_service/login_screen.dart';
-
+import 'package:provider/provider.dart';
+import 'providers/weather_provider.dart';
+import 'providers/holiday_provider.dart';
+import 'providers/order_provider.dart';
+import 'home_service/low_stock_forecast_screen.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print("📩 백그라운드 메시지 도착: ${message.notification?.title}");
@@ -31,7 +34,17 @@ void main() async {
   // FCM 토큰 출력
   _printFcmToken();
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProvider(create: (_) => HolidayProvider()),
+        ChangeNotifierProvider(create: (_) => OrderProvider()),
+
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 void _printFcmToken() async {
@@ -52,6 +65,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/main': (context) => const MainNavigation(),
+        '/lowStockForecast': (context) => const LowStockForecastScreen(),
       },
     );
   }

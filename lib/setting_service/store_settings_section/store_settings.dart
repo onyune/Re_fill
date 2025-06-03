@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 
-import 'store_change_page.dart';
 import 'team_management_screen.dart';
 
 class StoreSettingsSection extends StatelessWidget {
@@ -20,14 +19,6 @@ class StoreSettingsSection extends StatelessWidget {
       children: [
         const Text('매장 설정',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('매장 변경'),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StoreChangePage()),
-          ),
-        ),
         if (role == 'owner')
           ListTile(
             contentPadding: EdgeInsets.zero,

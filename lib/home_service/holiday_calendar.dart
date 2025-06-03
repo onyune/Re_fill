@@ -1,8 +1,10 @@
-// 홈 화면 > 캘린더 위젯
+// 공휴일 정보를 캘린더 형태로 보여주고, 오늘이 공휴일인지 판단
 
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:provider/provider.dart';
+import 'package:refill/providers/holiday_provider.dart';
 
 class HolidayCalendar extends StatefulWidget {
   const HolidayCalendar({super.key});
@@ -24,6 +26,9 @@ class _HolidayCalendarState extends State<HolidayCalendar> {
   @override
   Widget build(BuildContext context) {
     final mainBlue = AppColors.primary;
+    final today = DateTime.utc(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final isHoliday = holidayEvents.containsKey(today);
+    Provider.of<HolidayProvider>(context, listen: false).updateHoliday(isHoliday);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
