@@ -81,8 +81,8 @@ class _OrderScreenState extends State<OrderScreen> {
 
     setState(() {
       items = combined;
+      _filterItemsByCategory();
     });
-    Future.delayed(Duration.zero, _filterItemsByCategory); // 안전하게 분리 실행
   }
 
   void _updateCount(String name, int count) {
@@ -107,6 +107,10 @@ class _OrderScreenState extends State<OrderScreen> {
         return matchCategory && matchSearch;
       }).map((e) => Map<String, dynamic>.from(e)).toList();
     });
+
+    print('🔥 전체 품목 개수: ${items.length}');
+    print('🔍 필터링된 품목 개수: ${filteredItems.length}');
+
   }
 
   Future<void> _confirmAndPlaceOrder() async {
@@ -191,10 +195,16 @@ class _OrderScreenState extends State<OrderScreen> {
         _filterItemsByCategory();      // 필터링도 갱신
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("발주가 완료되었습니다.")),
-      );
-      Navigator.pop(context, 'ordered');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("발주가 완료되었습니다.")),
+        );
+
+        if (widget.prefilledCounts != null) {
+          Navigator.of(context).pop('ordered');
+        }
+      }
+
 
     } catch (e) {
       print("발주 중 오류 발생: $e");
@@ -275,7 +285,9 @@ class _OrderScreenState extends State<OrderScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView.separated(
+              child: filteredItems.isEmpty
+                  ? const Center(child: Text("등록된 품목이 없습니다."))
+                  : ListView.separated(
                 itemCount: filteredItems.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {

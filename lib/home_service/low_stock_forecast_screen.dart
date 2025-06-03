@@ -49,15 +49,16 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
     });
   }
 
-  void _showConfirmationDialog() {
+  Future<Map<String, int>?> _showConfirmationDialog() async {
     final selected = predictedItems
         .where((item) => selectedItems.contains(item['name']))
         .toList();
+
     for (var item in selected) {
       customCounts[item['name']] = (item['recommendedExtra']).clamp(1, 99);
     }
 
-    showDialog(
+    return showDialog<Map<String, int>>(  // ✅ 반드시 return 해야 함
       context: context,
       builder: (context) {
         return StatefulBuilder(
@@ -65,7 +66,6 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
             return AlertDialog(
               title: const Text('발주 수량 확인'),
               content: SizedBox(
-                // 화면 높이의 60% 정도까지만 쓰게 제한
                 height: MediaQuery.of(context).size.height * 0.6,
                 width: double.maxFinite,
                 child: SingleChildScrollView(
@@ -106,21 +106,12 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(context, null),
                   child: const Text('취소'),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => OrderScreen(prefilledCounts: customCounts),
-                      ),
-                    );
-
-                    if (result == 'ordered') {
-                      loadForecastData(); // 발주한 경우에만 재로딩
-                    }
+                  onPressed: () {
+                    Navigator.pop(context, Map<String, int>.from(customCounts)); // ✅ 리턴값 전달
                   },
                   child: const Text('추가하기'),
                 ),
@@ -209,7 +200,21 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
                     ),
                     onPressed: selectedItems.isEmpty
                         ? null
-                        : _showConfirmationDialog,
+                        : () async {
+                      final counts = await _showConfirmationDialog();
+                      if (!mounted || counts == null) return;
+
+                      Future.microtask(() async {
+                        final result = await Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            builder: (_) => OrderScreen(prefilledCounts: counts),
+                          ),
+                        );
+                        if (result == 'ordered') {
+                          loadForecastData();
+                        }
+                      });
+                    },
                     child: const Text(
                       '발주 목록에 추가하기',
                       style: TextStyle(color: Colors.white),
