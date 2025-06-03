@@ -1,3 +1,5 @@
+// 매장별 실시간 채팅 화면 (메시지 전송, 읽음 처리, 유저 정보 표시)
+
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

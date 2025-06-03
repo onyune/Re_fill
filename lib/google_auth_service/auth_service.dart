@@ -1,3 +1,5 @@
+// Google 계정으로 Firebase에 로그인하기 위한 연동 클래스
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
