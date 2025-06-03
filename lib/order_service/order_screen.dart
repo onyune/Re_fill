@@ -13,8 +13,6 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen> {
-  static Map<String, int> persistentCounts = {};
-
   bool isAuto = false;
   int selectedCategory = 0;
   final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '티', '기타'];
@@ -40,14 +38,19 @@ class _OrderScreenState extends State<OrderScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid).get();
     final storeId = userDoc['storeId'];
 
-    final orderTemplateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
     final stockSnap = await FirebaseFirestore.instance
         .collection('stocks')
         .doc(storeId)
         .collection('items')
+        .get();
+
+    final orderTemplateSnap = await FirebaseFirestore.instance
+        .collection('orderTemplates')
         .get();
 
     final stockMap = { for (var doc in stockSnap.docs) doc.id: doc.data() };
@@ -60,11 +63,9 @@ class _OrderScreenState extends State<OrderScreen> {
 
       if (widget.prefilledCounts != null && widget.prefilledCounts!.containsKey(name)) {
         count = widget.prefilledCounts![name]!;
-        persistentCounts[name] = count;
-      }
-
-      if (persistentCounts.containsKey(name)) {
-        count = persistentCounts[name]!;
+      } else {
+        // 항상 최신 stock 기준으로 초기화
+        count = 0;
       }
 
       return {
@@ -92,7 +93,6 @@ class _OrderScreenState extends State<OrderScreen> {
       final filteredIndex = filteredItems.indexWhere((e) => e['name'] == name);
       if (filteredIndex != -1) filteredItems[filteredIndex]['count'] = count;
 
-      persistentCounts[name] = count;
       filteredItems = List<Map<String, dynamic>>.from(filteredItems); // 강제 rebuild
     });
   }
@@ -107,13 +107,61 @@ class _OrderScreenState extends State<OrderScreen> {
         return matchCategory && matchSearch;
       }).map((e) => Map<String, dynamic>.from(e)).toList();
     });
+
+    print('🔥 전체 품목 개수: ${items.length}');
+    print('🔍 필터링된 품목 개수: ${filteredItems.length}');
+
+  }
+
+  Future<void> _confirmAndPlaceOrder() async {
+    final selectedItems = items.where((item) => item['count'] > 0).toList();
+
+    if (selectedItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("발주할 품목이 없습니다.")),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("발주 확인"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("선택한 품목들로 발주를 진행할까요?\n"),
+                ...selectedItems.map((item) => Text(
+                  '• ${item['name']} (${item['count']}개)',
+                  style: const TextStyle(fontSize: 14),
+                )),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("취소")),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("확인")),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _placeOrder();
+    }
   }
 
   Future<void> _placeOrder() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid).get();
     final storeId = userDoc['storeId'];
     final batch = FirebaseFirestore.instance.batch();
 
@@ -137,17 +185,27 @@ class _OrderScreenState extends State<OrderScreen> {
 
     try {
       await batch.commit();
+
+      await _loadOrderData();
+
       setState(() {
-        persistentCounts.clear();      // 먼저 초기화
         for (final item in items) {
           item['count'] = 0;           // UI에서도 0으로
         }
         _filterItemsByCategory();      // 필터링도 갱신
       });
-      Navigator.pop(context, true);   // 화면 종료
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("발주가 완료되었습니다.")),
-      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("발주가 완료되었습니다.")),
+        );
+
+        if (widget.prefilledCounts != null) {
+          Navigator.of(context).pop('ordered');
+        }
+      }
+
+
     } catch (e) {
       print("발주 중 오류 발생: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -171,11 +229,15 @@ class _OrderScreenState extends State<OrderScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const StocksScreen()),
                 );
+
+                if (result == 'updated') {
+                  _loadOrderData();
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -223,7 +285,9 @@ class _OrderScreenState extends State<OrderScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView.separated(
+              child: filteredItems.isEmpty
+                  ? const Center(child: Text("등록된 품목이 없습니다."))
+                  : ListView.separated(
                 itemCount: filteredItems.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {
@@ -273,7 +337,7 @@ class _OrderScreenState extends State<OrderScreen> {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                onPressed: _placeOrder,
+                onPressed: _confirmAndPlaceOrder,
                 child: const Text('발주하기', style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),

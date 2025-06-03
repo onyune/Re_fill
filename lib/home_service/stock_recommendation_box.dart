@@ -16,8 +16,10 @@ class StockRecommendationBox extends StatefulWidget {
 }
 
 class _StockRecommendationBoxState extends State<StockRecommendationBox> {
-  List<String> recommendations = [];
   bool isLoading = true;
+  int shortageCount = 0;
+  String weatherText = '';
+  String demandSummary = '';
 
   @override
   void initState() {
@@ -32,38 +34,48 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final storeId = userDoc['storeId'];
 
-    // 테스트 강제 지정 가능
     final weatherMain = Provider.of<WeatherProvider>(context, listen: false).weatherMain;
-    final isHoliday = Provider.of<HolidayProvider>(context, listen: false).isTodayHoliday;
-    //final weatherMain = 'rain';
-    //final isHoliday = true;
+    final isHoliday = Provider.of<HolidayProvider>(context, listen: false).isTomorrowHoliday;
 
-
-    final items = await getPredictedLowStockItems(
-      storeId: storeId,
-      weatherMain: weatherMain,
-      isHoliday: isHoliday,
-    );
-
-    // 🔍 디버깅 로그 찍기
-    for (final item in items) {
-      print("✅ 예측 확인: ${item['name']}, 수량 ${item['quantity']} / 필요 ${item['predictedMin']}");
-    }
+    final items = await getPredictedStockRecommendations(storeId: storeId);
 
     final filtered = items.where((item) {
       final q = item['quantity'];
-      final min = item['predictedMin'];
-      return q is int && min is int && q < min;
+      final need = item['predictedNeed'];
+      if (q is! int || need is! int || need == 0) return false;
+      final shortageRate = (need - q) / need;
+      return shortageRate >= 0.3; // 30% 이상 부족한 품목만
     }).toList();
 
-    print("📦 최종 필터링 결과: ${filtered.map((e) => e['name'])}");
+    String weatherInfo = '';
+    if (weatherMain.toLowerCase().contains('clear')) {
+      weatherInfo = '☀️ 내일은 맑은 날씨가 예상돼요.';
+    } else if (weatherMain.toLowerCase().contains('rain')) {
+      weatherInfo = '🌧️ 내일은 비 소식이 있어요.';
+    } else if (weatherMain.toLowerCase().contains('snow')) {
+      weatherInfo = '❄️ 내일은 눈이 올 가능성이 있어요.';
+    } else {
+      weatherInfo = '🌤️ 내일 날씨는 흐릴 수 있어요.';
+    }
+
+    if (isHoliday) {
+      weatherInfo += '\n📅 내일은 공휴일이라 손님이 많을 수 있어요.';
+    } else {
+      final tomorrow = DateTime.now().add(const Duration(days: 1));
+      if (tomorrow.weekday == DateTime.saturday || tomorrow.weekday == DateTime.sunday) {
+        weatherInfo += '\n📌 내일은 주말이에요. 매출 증가 가능성이 있어요.';
+      }
+    }
 
     setState(() {
-      recommendations = filtered.map((e) => e['name'].toString()).toList();
+      shortageCount = filtered.length;
+      weatherText = weatherInfo;
+      demandSummary = shortageCount == 0
+          ? '지금은 재고가 충분해 보여요!'
+          : '예상 수요 부족 품목이 $shortageCount개 있어요.';
       isLoading = false;
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +86,7 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: isLoading
-          ? const CircularProgressIndicator()
+          ? const Center(child: CircularProgressIndicator())
           : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -82,12 +94,15 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
             '재고 예측 추천',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          recommendations.isEmpty
-              ? const Text('예상 부족 품목 없음')
-              : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: recommendations.map((name) => Text('• $name')).toList(),
+          const SizedBox(height: 6),
+          Text(
+            weatherText,
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            demandSummary,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -96,10 +111,14 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const LowStockForecastScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const LowStockForecastScreen(),
+                  ),
                 );
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
               child: const Text('예측 상세보기', style: TextStyle(color: Colors.white)),
             ),
           ),
@@ -108,3 +127,4 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
     );
   }
 }
+

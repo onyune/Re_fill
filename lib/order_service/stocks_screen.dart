@@ -11,14 +11,28 @@ class StocksScreen extends StatefulWidget {
 }
 
 class _StocksScreenState extends State<StocksScreen> {
-  bool isAuto = false;
   List<Map<String, dynamic>> stockItems = [];
+  List<Map<String, dynamic>> filteredStockItems = [];
   String role = 'staff'; // 기본값: staff
+  String _searchKeyword = '';
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadStockData();
+  }
+
+  void _filterStockItems() {
+    setState(() {
+      filteredStockItems = stockItems
+          .map((item) => {...item})
+          .where((item) => item['name']
+          .toString()
+          .toLowerCase()
+          .contains(_searchKeyword.toLowerCase()))
+          .toList();
+    });
   }
 
   Future<void> _loadStockData() async {
@@ -53,16 +67,60 @@ class _StocksScreenState extends State<StocksScreen> {
         'defaultQuantity': template['defaultQuantity'] ?? 1,
         'stock': currentQty,
         'min': stock?['minQuantity'] ?? 0,
-        'count': currentQty, // ✅ 현재 재고 수량으로 초기화
+        'count': currentQty, // 현재 재고 수량으로 초기화
       };
     }).toList();
 
     setState(() {
       stockItems = combined;
+      _filterStockItems();
     });
   }
 
   Future<void> _saveStockChanges() async {
+    for (var i = 0; i < stockItems.length; i++) {
+      final itemName = stockItems[i]['name'];
+      final updated = filteredStockItems.firstWhere(
+            (e) => e['name'] == itemName,
+        orElse: () => {},
+      );
+      if (updated.isNotEmpty) {
+        stockItems[i]['count'] = updated['count'];
+      }
+    }
+
+    final changedItems = stockItems.where((item) => item['stock'] != item['count']).toList();
+
+    if (changedItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("변경된 재고가 없습니다.")),
+      );
+      return;
+    }
+
+    final summary = changedItems.map((item) =>
+    '${item['name']} : ${item['stock']} → ${item['count']}').join('\n');
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("재고 수정 확인"),
+        content: Text("이대로 재고를 수정할까요?\n\n$summary"),
+        actions: [
+          TextButton(
+            child: const Text("취소"),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          TextButton(
+            child: const Text("확인"),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -71,21 +129,24 @@ class _StocksScreenState extends State<StocksScreen> {
 
     final batch = FirebaseFirestore.instance.batch();
 
-    for (var item in stockItems) {
+    for (var item in changedItems) {
       final count = item['count'];
       final itemName = item['name'];
 
-      final docRef = FirebaseFirestore.instance
-          .collection('stocks')
-          .doc(storeId)
-          .collection('items')
-          .doc(itemName);
-
-      batch.update(docRef, {'quantity': count}); // ✅ 입력한 수량 그대로 저장 (덮어쓰기)
+      batch.update(
+        FirebaseFirestore.instance
+            .collection('stocks')
+            .doc(storeId)
+            .collection('items')
+            .doc(itemName),
+        {'quantity': count},
+      );
     }
 
     await batch.commit();
     await _loadStockData();
+
+    Navigator.pop(context, 'updated');
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("재고가 수정되었습니다.")),
@@ -121,12 +182,17 @@ class _StocksScreenState extends State<StocksScreen> {
                 border: Border.all(color: AppColors.primary),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(Icons.search, color: AppColors.primary),
                   SizedBox(width: 8),
                   Expanded(
                     child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        _searchKeyword = value;
+                        _filterStockItems();
+                      },
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: '검색',
@@ -142,10 +208,10 @@ class _StocksScreenState extends State<StocksScreen> {
             // 📦 재고 항목 리스트
             Expanded(
               child: ListView.separated(
-                itemCount: stockItems.length,
+                itemCount: filteredStockItems.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {
-                  final item = stockItems[index];
+                  final item = filteredStockItems[index];
                   final isShort = item['stock'] < item['min'];
 
                   final stockText = (role == 'owner')

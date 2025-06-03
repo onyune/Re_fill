@@ -37,11 +37,10 @@ class _WeatherBoxState extends State<WeatherBox> {
       final humid = data['main']['humidity'];
       print('현재 습도: $humid');
 
-      // ✅ 날씨 상태를 Provider에 저장
       Provider.of<WeatherProvider>(context, listen: false).updateWeather(weatherMain);
 
       setState(() {
-        weather = data['weather'][0]['description'];
+        weather = _translateWeather(weatherMain);
         temperature = '${temp.toStringAsFixed(1)}°C';
         humidity = '습도 $humid%';
         weatherIcon = _getWeatherIcon(weatherMain);
@@ -90,6 +89,28 @@ class _WeatherBoxState extends State<WeatherBox> {
         return Icons.blur_on;
       default:
         return Icons.wb_cloudy;
+    }
+  }
+
+  String _translateWeather(String main) {
+    switch (main.toLowerCase()) {
+      case 'clear':
+        return '맑음';
+      case 'clouds':
+        return '흐림';
+      case 'rain':
+        return '비';
+      case 'drizzle':
+        return '이슬비';
+      case 'snow':
+        return '눈';
+      case 'thunderstorm':
+        return '천둥번개';
+      case 'mist':
+      case 'fog':
+        return '안개';
+      default:
+        return '알 수 없음';
     }
   }
 
