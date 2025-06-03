@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:refill/colors.dart';
 import 'package:refill/home_service/weather/stock_forecast.dart';
 import 'package:refill/order_service/order_screen.dart';
@@ -30,7 +31,8 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
     if (uid == null) return;
 
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    final storeId = userDoc['storeId'];
+    final storeId = userDoc.data()?['storeId'];
+    debugPrint('📦 가져온 storeId: $storeId');
 
     final items = await getPredictedStockRecommendations(storeId: storeId);
     final filtered = items.where((item) {
@@ -47,6 +49,47 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
       predictedItems = filtered;
       isLoading = false;
     });
+  }
+
+  Future<void> triggerStockRecommendationFunction(String? storeId) async {
+    final id = storeId?.toString() ?? '';
+    if (id.isEmpty) {
+      debugPrint('❌ trigger 함수에 유효하지 않은 storeId가 전달됨');
+      return;
+    }
+
+    try {
+      debugPrint('🚀 Cloud Function 호출: storeId=$id');
+      await FirebaseFunctions.instance
+          .httpsCallable('generateStockRecommendations')
+          .call(<String, dynamic>{
+        'storeId': id,
+        'weatherMain': 'cloudy',
+        'isHoliday': false,
+      });
+      debugPrint('✅ Cloud Function 호출 성공');
+    } catch (e) {
+      debugPrint('🔴 Cloud Function 호출 실패: $e');
+    }
+  }
+
+
+  Future<void> triggerStockRecommendationFunctionFromUser() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      debugPrint('❌ 사용자 로그인 안 됨');
+      return;
+    }
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final storeId = userDoc.data()?['storeId'];
+
+    if (storeId == null) {
+      debugPrint('❌ storeId가 사용자 문서에 없음');
+      return;
+    }
+
+    await triggerStockRecommendationFunction(storeId);
   }
 
   Future<Map<String, int>?> _showConfirmationDialog() async {
@@ -204,16 +247,20 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
                       final counts = await _showConfirmationDialog();
                       if (!mounted || counts == null) return;
 
-                      Future.microtask(() async {
-                        final result = await Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(
-                            builder: (_) => OrderScreen(prefilledCounts: counts),
-                          ),
-                        );
-                        if (result == 'ordered') {
-                          loadForecastData();
-                        }
-                      });
+                      // 발주 화면으로 이동 및 결과 받기
+                      final result = await Navigator.of(context, rootNavigator: true).push(
+                        MaterialPageRoute(
+                          builder: (_) => OrderScreen(prefilledCounts: counts),
+                        ),
+                      );
+
+                      // 발주 성공 시 Cloud Function 실행 → 데이터 다시 불러오기
+                      if (result == 'ordered') {
+                        await Future.delayed(const Duration(seconds: 1));
+                        await triggerStockRecommendationFunctionFromUser(); // 이걸로 대체
+                        await Future.delayed(const Duration(milliseconds: 500));
+                        await loadForecastData();
+                      }
                     },
                     child: const Text(
                       '발주 목록에 추가하기',

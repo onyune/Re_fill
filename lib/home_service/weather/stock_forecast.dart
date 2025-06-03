@@ -7,7 +7,7 @@ Future<List<Map<String, dynamic>>> getPredictedStockRecommendations({
   final doc = await FirebaseFirestore.instance
       .collection('recommendations')
       .doc(storeId)
-      .get();
+      .get(const GetOptions(source: Source.server)); // 서버에서 강제로 가져오기
 
   final data = doc.data();
   if (data == null || !data.containsKey('items')) return [];
