@@ -1,3 +1,5 @@
+// 매장별 실시간 채팅 화면 (메시지 전송, 읽음 처리, 유저 정보 표시)
+
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -81,8 +83,14 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String _getRoleEmoji(String role) {
-    if (role == 'owner') return '⭐ ';
-    return '';
+    switch (role) {
+      case 'owner':
+        return '⭐ '; // 점주 - 별모양
+      case 'manager':
+        return '💡 '; // 매니저 - 전구모양
+      default:
+        return '';    // 직원 - 없음
+    }
   }
 
   void _sendMessage() async {
