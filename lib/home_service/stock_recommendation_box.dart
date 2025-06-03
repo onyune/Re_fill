@@ -127,3 +127,4 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
     );
   }
 }
+

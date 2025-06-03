@@ -18,3 +18,4 @@ class HolidayProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

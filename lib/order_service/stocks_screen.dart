@@ -28,9 +28,10 @@ class _StocksScreenState extends State<StocksScreen> {
       filteredStockItems = stockItems
           .map((item) => {...item})
           .where((item) => item['name']
-              .toString()
-              .toLowerCase()
-              .contains(_searchKeyword.toLowerCase()))
+          .toString()
+          .toLowerCase()
+          .contains(_searchKeyword.toLowerCase()))
+
           .toList();
     });
   }

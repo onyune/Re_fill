@@ -133,7 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 24,
           ),
         ),
         backgroundColor: Colors.transparent,
