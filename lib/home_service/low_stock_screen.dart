@@ -123,3 +123,4 @@ class _LowStockScreenState extends State<LowStockScreen> {
     );
   }
 }
+

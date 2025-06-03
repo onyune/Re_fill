@@ -24,3 +24,4 @@ Future<List<Map<String, dynamic>>> getPredictedStockRecommendations({
     };
   }).toList();
 }
+
