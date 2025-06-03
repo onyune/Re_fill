@@ -221,7 +221,11 @@ class _OrderScreenState extends State<OrderScreen> {
       appBar: AppBar(
         title: const Text(
           '발주',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.primary,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: AppColors.primary,
         iconTheme: const IconThemeData(color: Colors.white),

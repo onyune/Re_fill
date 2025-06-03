@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../main_navigation.dart';
 import 'package:refill/colors.dart';
+import 'package:refill/login_service/login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -24,7 +26,6 @@ class _SignupScreenState extends State<SignupScreen> {
   String? _idMessage;
   Color? _idMessageColor;
   Color? _idBorderColor;
-
   bool _isEmailDuplicate = false;
 
   void _showSnackBar(String msg) {
@@ -86,27 +87,23 @@ class _SignupScreenState extends State<SignupScreen> {
     final isValid = _formKey.currentState!.validate();
     if (!isValid) return;
 
-    // ID 중복 확인 여부 확인
     if (!_isIdChecked) {
       _showSnackBar('ID 중복 확인을 해주세요.');
       return;
     }
 
-    // 이메일 중복 확인 (validator에서 쓸 수 없으므로 여기서 처리)
     final isDuplicateEmail = await isEmailDuplicated(_emailController.text.trim());
     if (isDuplicateEmail) {
       setState(() => _isEmailDuplicate = true);
-      _formKey.currentState!.validate(); // 다시 에러 반영
+      _formKey.currentState!.validate();
       return;
     }
 
-    // 비밀번호 확인
     if (_passwordController.text != _checkPasswordController.text) {
       _showSnackBar('비밀번호가 일치하지 않습니다.');
       return;
     }
 
-    // 회원가입 진행
     try {
       final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
@@ -127,7 +124,7 @@ class _SignupScreenState extends State<SignupScreen> {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
         setState(() => _isEmailDuplicate = true);
-        _formKey.currentState!.validate(); // 에러 메시지 반영
+        _formKey.currentState!.validate();
       } else {
         debugPrint('회원가입 실패: ${e.message}');
       }
@@ -140,30 +137,34 @@ class _SignupScreenState extends State<SignupScreen> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
       enabledBorder: OutlineInputBorder(
         borderSide: BorderSide(color: AppColors.borderDefault, width: 2),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
       ),
       focusedBorder: OutlineInputBorder(
         borderSide: BorderSide(color: AppColors.primary, width: 2),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
       ),
       errorBorder: const OutlineInputBorder(
         borderSide: BorderSide(color: AppColors.error, width: 2),
-        borderRadius: BorderRadius.all(Radius.circular(20)),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
       focusedErrorBorder: const OutlineInputBorder(
         borderSide: BorderSide(color: AppColors.error, width: 2),
-        borderRadius: BorderRadius.all(Radius.circular(20)),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       errorStyle: const TextStyle(color: AppColors.error, fontSize: 13),
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(elevation: 0, automaticallyImplyLeading: true),
+      appBar: AppBar(
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.primary),
+        backgroundColor: AppColors.background,
+        automaticallyImplyLeading: true,
+      ),
       backgroundColor: AppColors.background,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(30, 20, 30, 0),
@@ -196,22 +197,22 @@ class _SignupScreenState extends State<SignupScreen> {
                             decoration: InputDecoration(
                               labelText: 'ID',
                               contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(color: _idBorderColor ?? AppColors.borderDefault, width: 2),
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderSide: BorderSide(color: _idBorderColor ?? AppColors.primary, width: 2),
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               errorBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(color: AppColors.error, width: 2),
-                                borderRadius: BorderRadius.all(Radius.circular(20)),
+                                borderRadius: BorderRadius.all(Radius.circular(12)),
                               ),
                               focusedErrorBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(color: AppColors.error, width: 2),
-                                borderRadius: BorderRadius.all(Radius.circular(20)),
+                                borderRadius: BorderRadius.all(Radius.circular(12)),
                               ),
                               errorStyle: const TextStyle(color: AppColors.error, fontSize: 13),
                             ),
@@ -243,7 +244,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             backgroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: const Text('중복확인', style: TextStyle(color: AppColors.background)),
@@ -307,25 +308,30 @@ class _SignupScreenState extends State<SignupScreen> {
                       obscureText: true,
                       decoration: _buildInputDecoration('비밀번호 확인'),
                     ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _signUp,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 56),
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        '회원가입',
-                        style: TextStyle(color: AppColors.background, fontSize: 16),
-                      ),
-                    ),
+                    const SizedBox(height: 80), // 하단 버튼 여유 공간 확보
                   ],
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(30, 0, 30, 50),
+        child: SizedBox(
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _signUp,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              '회원가입',
+              style: TextStyle(color: AppColors.background, fontSize: 16),
+            ),
           ),
         ),
       ),
