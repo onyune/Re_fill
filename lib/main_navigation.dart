@@ -98,6 +98,7 @@ class _MainNavigationState extends State<MainNavigation> {
         },
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.borderDefault,
+        backgroundColor: AppColors.background,
         type: BottomNavigationBarType.fixed,
         items: [
           const BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
