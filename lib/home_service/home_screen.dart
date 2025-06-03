@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const mainBlue = AppColors.primary;
+
 
   String? userRole;
   bool isLoading = true;
@@ -45,11 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("홈"),
-        backgroundColor: mainBlue,
-        foregroundColor: AppColors.background,
-      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
