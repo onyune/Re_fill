@@ -1,7 +1,8 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:refill/colors.dart';
 import 'package:refill/home_service/weather/stock_forecast.dart';
 import 'package:refill/order_service/order_screen.dart';
@@ -51,28 +52,29 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
     });
   }
 
-  Future<void> triggerStockRecommendationFunction(String? storeId) async {
-    final id = storeId?.toString() ?? '';
-    if (id.isEmpty) {
-      debugPrint('❌ trigger 함수에 유효하지 않은 storeId가 전달됨');
-      return;
-    }
+  Future<void> triggerStockRecommendationViaHttp(String storeId) async {
+    final url = Uri.parse("https://us-central1-re-fill-59fc9.cloudfunctions.net/generateStockRecommendations");
 
     try {
-      debugPrint('🚀 Cloud Function 호출: storeId=$id');
-      await FirebaseFunctions.instance
-          .httpsCallable('generateStockRecommendations')
-          .call(<String, dynamic>{
-        'storeId': id,
-        'weatherMain': 'cloudy',
-        'isHoliday': false,
-      });
-      debugPrint('✅ Cloud Function 호출 성공');
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'storeId': storeId,
+          'weatherMain': 'cloudy',
+          'isHoliday': false,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint("✅ 호출 성공: ${response.body}");
+      } else {
+        debugPrint("❌ 호출 실패(${response.statusCode}): ${response.body}");
+      }
     } catch (e) {
-      debugPrint('🔴 Cloud Function 호출 실패: $e');
+      debugPrint("🔴 네트워크 오류: $e");
     }
   }
-
 
   Future<void> triggerStockRecommendationFunctionFromUser() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -89,7 +91,7 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
       return;
     }
 
-    await triggerStockRecommendationFunction(storeId);
+    await triggerStockRecommendationViaHttp(storeId);
   }
 
   Future<Map<String, int>?> _showConfirmationDialog() async {
