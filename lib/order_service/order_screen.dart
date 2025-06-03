@@ -107,10 +107,6 @@ class _OrderScreenState extends State<OrderScreen> {
         return matchCategory && matchSearch;
       }).map((e) => Map<String, dynamic>.from(e)).toList();
     });
-
-    print('🔥 전체 품목 개수: ${items.length}');
-    print('🔍 필터링된 품목 개수: ${filteredItems.length}');
-
   }
 
   Future<void> _confirmAndPlaceOrder() async {
