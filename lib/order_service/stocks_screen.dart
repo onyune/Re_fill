@@ -90,7 +90,8 @@ class _StocksScreenState extends State<StocksScreen> {
       }
     }
 
-    final changedItems = stockItems.where((item) => item['stock'] != item['count']).toList();
+    final changedItems =
+    stockItems.where((item) => item['stock'] != item['count']).toList();
 
     if (changedItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -99,8 +100,9 @@ class _StocksScreenState extends State<StocksScreen> {
       return;
     }
 
-    final summary = changedItems.map((item) =>
-    '${item['name']} : ${item['stock']} → ${item['count']}').join('\n');
+    final summary = changedItems
+        .map((item) => '${item['name']} : ${item['stock']} → ${item['count']}')
+        .join('\n');
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -144,14 +146,22 @@ class _StocksScreenState extends State<StocksScreen> {
       );
     }
 
-    await batch.commit();
-    await _loadStockData();
+    try {
+      await batch.commit();
+      await _loadStockData(); // 🔁 수정 후 UI 갱신
 
-    Navigator.pop(context, 'updated');
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("재고가 수정되었습니다.")),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("재고가 수정되었습니다.")),
+      );
+    } catch (e) {
+      print('🔥 재고 수정 실패: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("❗ 권한이 없어 재고를 수정할 수 없습니다."),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
