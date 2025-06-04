@@ -35,15 +35,14 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
     final storeId = userDoc.data()?['storeId'];
     debugPrint('📦 가져온 storeId: $storeId');
 
-    final items = await getPredictedStockRecommendations(storeId: storeId);
-    final filtered = items.where((item) {
-      final q = item['quantity'];
-      final need = item['predictedNeed'];
-      if (q is! int || need is! int || need == 0) return false;
+    // Cloud Function 먼저 호출
+    await triggerStockRecommendationViaHttp(storeId);
 
-      final shortageRate = (need - q) / need;
-      return shortageRate >= 0.3; // 30% 이상 부족한 경우만
-    }).toList();
+    // 0.5초 정도 기다렸다가 (Firestore 반영 딜레이 대비)
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Firestore에서 예측 결과 가져오기
+    final filtered = await getFilteredPredictedItems(storeId: storeId); // ✅ 통일된 필터 사용
 
     setState(() {
       forecastSummary = '📊 내일 수요를 기반으로 한 자동 발주 추천입니다.\n예상 수요보다 적은 품목에 대해 발주를 제안합니다.';

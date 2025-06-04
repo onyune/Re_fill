@@ -27,6 +27,21 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
     _loadRecommendations();
   }
 
+  Future<List<Map<String, dynamic>>> getFilteredPredictedItems({
+    required String storeId,
+    double shortageThreshold = 0.3,
+  }) async {
+    final items = await getPredictedStockRecommendations(storeId: storeId);
+    return items.where((item) {
+      final q = item['quantity'];
+      final need = item['predictedNeed'];
+      if (q is! int || need is! int || need == 0) return false;
+
+      final shortageRate = (need - q) / need;
+      return shortageRate >= shortageThreshold;
+    }).toList();
+  }
+
   Future<void> _loadRecommendations() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -37,15 +52,7 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
     final weatherMain = Provider.of<WeatherProvider>(context, listen: false).weatherMain;
     final isHoliday = Provider.of<HolidayProvider>(context, listen: false).isTomorrowHoliday;
 
-    final items = await getPredictedStockRecommendations(storeId: storeId);
-
-    final filtered = items.where((item) {
-      final q = item['quantity'];
-      final need = item['predictedNeed'];
-      if (q is! int || need is! int || need == 0) return false;
-      final shortageRate = (need - q) / need;
-      return shortageRate >= 0.3; // 30% 이상 부족한 품목만
-    }).toList();
+    final filtered = await getFilteredPredictedItems(storeId: storeId); // ✅ 여기!!
 
     String weatherInfo = '';
     if (weatherMain.toLowerCase().contains('clear')) {
@@ -76,6 +83,7 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
       isLoading = false;
     });
   }
+
 
   @override
   Widget build(BuildContext context) {

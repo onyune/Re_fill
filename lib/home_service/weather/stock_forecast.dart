@@ -25,3 +25,18 @@ Future<List<Map<String, dynamic>>> getPredictedStockRecommendations({
   }).toList();
 }
 
+/// 예측된 품목 중 부족률이 일정 기준 이상인 항목만 필터링해서 반환
+Future<List<Map<String, dynamic>>> getFilteredPredictedItems({
+  required String storeId,
+  double shortageThreshold = 0.3,
+}) async {
+  final items = await getPredictedStockRecommendations(storeId: storeId);
+  return items.where((item) {
+    final q = item['quantity'];
+    final need = item['predictedNeed'];
+    if (q is! int || need is! int || need == 0) return false;
+
+    final shortageRate = (need - q) / need;
+    return shortageRate >= shortageThreshold;
+  }).toList();
+}
