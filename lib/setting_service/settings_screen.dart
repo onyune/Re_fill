@@ -173,7 +173,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             UserCard(userName: userName, role: role),
             const SizedBox(height: 32),
-            if (role != 'staff') ...[
+
+            if (role == 'owner') ...[
               InviteCodeSection(
                 isInviteCodeGenerated: isInviteCodeGenerated,
                 inviteCode: inviteCode,
@@ -185,7 +186,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 role: role,
               ),
               StoreSettingsSection(role: role),
+            ] else if (role == 'manager') ...[
+              AppSettingsSection(
+                lowStockNotification: lowStockNotification,
+                onToggleLowStock: (value) => setState(() => lowStockNotification = value),
+                role: role,
+              ),
             ],
+
             SecuritySection(
               isGoogleUser: isGoogleUser,
               onResetPassword: _sendPasswordResetEmail,

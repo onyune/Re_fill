@@ -107,10 +107,6 @@ class _OrderScreenState extends State<OrderScreen> {
         return matchCategory && matchSearch;
       }).map((e) => Map<String, dynamic>.from(e)).toList();
     });
-
-    print('🔥 전체 품목 개수: ${items.length}');
-    print('🔍 필터링된 품목 개수: ${filteredItems.length}');
-
   }
 
   Future<void> _confirmAndPlaceOrder() async {
@@ -217,18 +213,13 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.background, //여기 색 다르게 되어있어서 수정했어용
       appBar: AppBar(
         title: const Text(
           '발주',
-          style: TextStyle(
-            color: AppColors.primary,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-
+          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.background,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Padding(

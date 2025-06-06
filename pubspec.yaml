@@ -39,7 +39,7 @@ dependencies:
   firebase_auth: ^4.20.0
   google_sign_in: ^6.1.4
   firebase_database: ^10.4.5
-
+  cloud_functions: ^4.6.5
   cloud_firestore: ^4.13.0
   firebase_messaging: ^14.6.5
   geolocator: ^10.1.0 #위치가져오기
@@ -47,6 +47,7 @@ dependencies:
   table_calendar: ^3.0.9
   intl: ^0.18.1  # 날씨API-> 5일 날씨 확인
   provider: ^6.1.1
+  shared_preferences: ^2.2.2 #아마도 자동발주시간설정에 쓰일것
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +63,7 @@ flutter:
     - assets/images/invite_code.png
     - assets/images/app_icon.png
 
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -71,4 +73,3 @@ flutter_icons:
   android: true
   ios: true
   image_path: "assets/images/app_icon.png"
-

@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -30,23 +32,65 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
     if (uid == null) return;
 
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    final storeId = userDoc['storeId'];
+    final storeId = userDoc.data()?['storeId'];
+    debugPrint('📦 가져온 storeId: $storeId');
 
-    final items = await getPredictedStockRecommendations(storeId: storeId);
-    final filtered = items.where((item) {
-      final q = item['quantity'];
-      final need = item['predictedNeed'];
-      if (q is! int || need is! int || need == 0) return false;
+    // Cloud Function 먼저 호출
+    await triggerStockRecommendationViaHttp(storeId);
 
-      final shortageRate = (need - q) / need;
-      return shortageRate >= 0.3; // 30% 이상 부족한 경우만
-    }).toList();
+    // 0.5초 정도 기다렸다가 (Firestore 반영 딜레이 대비)
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Firestore에서 예측 결과 가져오기
+    final filtered = await getFilteredPredictedItems(storeId: storeId); // ✅ 통일된 필터 사용
 
     setState(() {
       forecastSummary = '📊 내일 수요를 기반으로 한 자동 발주 추천입니다.\n예상 수요보다 적은 품목에 대해 발주를 제안합니다.';
       predictedItems = filtered;
       isLoading = false;
     });
+  }
+
+  Future<void> triggerStockRecommendationViaHttp(String storeId) async {
+    final url = Uri.parse("https://us-central1-re-fill-59fc9.cloudfunctions.net/generateStockRecommendations");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'storeId': storeId,
+          'weatherMain': 'cloudy',
+          'isHoliday': false,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint("✅ 호출 성공: ${response.body}");
+      } else {
+        debugPrint("❌ 호출 실패(${response.statusCode}): ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("🔴 네트워크 오류: $e");
+    }
+  }
+
+  Future<void> triggerStockRecommendationFunctionFromUser() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      debugPrint('❌ 사용자 로그인 안 됨');
+      return;
+    }
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final storeId = userDoc.data()?['storeId'];
+
+    if (storeId == null) {
+      debugPrint('❌ storeId가 사용자 문서에 없음');
+      return;
+    }
+
+    await triggerStockRecommendationViaHttp(storeId);
   }
 
   Future<Map<String, int>?> _showConfirmationDialog() async {
@@ -204,16 +248,20 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
                       final counts = await _showConfirmationDialog();
                       if (!mounted || counts == null) return;
 
-                      Future.microtask(() async {
-                        final result = await Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(
-                            builder: (_) => OrderScreen(prefilledCounts: counts),
-                          ),
-                        );
-                        if (result == 'ordered') {
-                          loadForecastData();
-                        }
-                      });
+                      // 발주 화면으로 이동 및 결과 받기
+                      final result = await Navigator.of(context, rootNavigator: true).push(
+                        MaterialPageRoute(
+                          builder: (_) => OrderScreen(prefilledCounts: counts),
+                        ),
+                      );
+
+                      // 발주 성공 시 Cloud Function 실행 → 데이터 다시 불러오기
+                      if (result == 'ordered') {
+                        await Future.delayed(const Duration(seconds: 1));
+                        await triggerStockRecommendationFunctionFromUser(); // 이걸로 대체
+                        await Future.delayed(const Duration(milliseconds: 500));
+                        await loadForecastData();
+                      }
                     },
                     child: const Text(
                       '발주 목록에 추가하기',

@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
-
+import 'auto_order_time.dart';
 import 'min_stock.dart';
 
 class AppSettingsSection extends StatelessWidget {
@@ -38,6 +38,14 @@ class AppSettingsSection extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MinStockListPage()),
+            ),
+          ),
+          ListTile( //추가한거
+            contentPadding: EdgeInsets.zero,
+            title: const Text('자동 발주 시간 설정'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AutoOrderTime()),
             ),
           ),
         Divider(thickness: 0.8, color: Colors.grey.shade300),
