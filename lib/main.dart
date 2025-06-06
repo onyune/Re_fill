@@ -10,6 +10,15 @@ import 'providers/weather_provider.dart';
 import 'providers/holiday_provider.dart';
 import 'providers/order_provider.dart';
 import 'home_service/low_stock_forecast_screen.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:refill/background/background_service.dart';
+import 'package:refill/order_service/auto_order.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =   // 🔵 추가
+FlutterLocalNotificationsPlugin();
+
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print("📩 백그라운드 메시지 도착: ${message.notification?.title}");
@@ -19,6 +28,18 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await initializeDateFormatting('ko'); // 한국어 날짜 포맷 초기화
+
+  await setupNotificationChannel();
+  await initializeService(); // 🔥 백그라운드 서비스 초기화
+  await FlutterBackgroundService().startService(); // ✅ 서비스 실행
+
+  // 🔵 flutter_local_notifications 초기화
+  const AndroidInitializationSettings initializationSettingsAndroid =
+  AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initializationSettings =
+  InitializationSettings(android: initializationSettingsAndroid);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
   // 알림 권한 요청
   NotificationSettings settings = await FirebaseMessaging.instance.requestPermission();
   print('🔔 알림 권한 상태: ${settings.authorizationStatus}');

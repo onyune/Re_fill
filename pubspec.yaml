@@ -48,6 +48,8 @@ dependencies:
   intl: ^0.18.1  # 날씨API-> 5일 날씨 확인
   provider: ^6.1.1
   shared_preferences: ^2.2.2 #아마도 자동발주시간설정에 쓰일것
+  flutter_local_notifications: ^17.1.2 #자동발주 알림
+  flutter_background_service: ^5.0.5
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/order_service/auto_order.dart';
 
 
 class AutoOrderTime extends StatefulWidget {
@@ -47,7 +48,7 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
 
       await FirebaseFirestore.instance.collection('stores').doc(storeId).update({
         'autoOrderTime': time,
-      });
+      }); // firestore에 시간 업데이트
     }
     setState(() {
       savedTime = time;
