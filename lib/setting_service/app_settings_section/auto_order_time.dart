@@ -2,6 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:refill/colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class AutoOrderTime extends StatefulWidget {
   const AutoOrderTime({super.key});
@@ -37,9 +40,21 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
     final prefs = await SharedPreferences.getInstance();
     final time = '$selectedPeriod ${selectedHour.toString().padLeft(2, '0')}:${selectedMinute.toString().padLeft(2, '0')}';
     await prefs.setString('auto_order_time', time);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final storeId = userDoc['storeId'];
+
+      await FirebaseFirestore.instance.collection('stores').doc(storeId).update({
+        'autoOrderTime': time,
+      });
+    }
     setState(() {
       savedTime = time;
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('자동 발주 시간이 저장되었습니다.')),
+    );
   }
 
   Widget _buildPicker(List list, int selected, Function(int) onSelected) {
