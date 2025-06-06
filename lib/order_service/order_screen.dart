@@ -213,13 +213,13 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.background, //여기 색 다르게 되어있어서 수정했어용
       appBar: AppBar(
         title: const Text(
           '발주',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.background,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Padding(

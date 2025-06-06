@@ -47,6 +47,7 @@ dependencies:
   table_calendar: ^3.0.9
   intl: ^0.18.1  # 날씨API-> 5일 날씨 확인
   provider: ^6.1.1
+  shared_preferences: ^2.2.2 #아마도 자동발주시간설정에 쓰일것
 
 dev_dependencies:
   flutter_test:
