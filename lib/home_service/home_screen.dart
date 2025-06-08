@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:refill/home_service/weather_box.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,7 +15,16 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? storeName;
   bool isLoading = true;
-  static const mainBlue = Color(0xFF2563EB); // Re:fill 주색
+  static const mainBlue = AppColors.primary;
+
+  final Map<DateTime, List<String>> holidayEvents = {
+    DateTime.utc(2025, 5, 5): ['어린이날'],
+    DateTime.utc(2025, 5, 15): ['석가탄신일'],
+    DateTime.utc(2025, 6, 6): ['현충일'],
+  };
+
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
 
   @override
   void initState() {
@@ -25,20 +37,26 @@ class _HomeScreenState extends State<HomeScreen> {
     if (uid == null) return;
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('stores')
-          .where('ownerUid', isEqualTo: uid)
-          .limit(1)
-          .get();
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final storeId = userDoc.data()?['storeId'];
 
-      if (snapshot.docs.isNotEmpty) {
+      if (storeId == null) {
         setState(() {
-          storeName = snapshot.docs.first['storeName'];
+          storeName = '매장에 가입되지 않았습니다';
+          isLoading = false;
+        });
+        return;
+      }
+
+      final storeDoc = await FirebaseFirestore.instance.collection('stores').doc(storeId).get();
+      if (storeDoc.exists) {
+        setState(() {
+          storeName = storeDoc.data()?['storeName'] ?? '이름 없는 매장';
           isLoading = false;
         });
       } else {
         setState(() {
-          storeName = '매장을 먼저 생성해주세요';
+          storeName = '매장 정보를 찾을 수 없습니다';
           isLoading = false;
         });
       }
@@ -53,22 +71,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("홈"),
         backgroundColor: mainBlue,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
       ),
-
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SingleChildScrollView(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 🔹 동적으로 불러온 매장명
                 Text(
                   isLoading ? '불러오는 중...' : (storeName ?? '매장명 없음'),
                   style: const TextStyle(
@@ -78,8 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // 검색창
                 TextField(
                   decoration: InputDecoration(
                     hintText: '검색',
@@ -95,48 +109,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // 한눈에 보기 (날씨 + 재고 요약)
                 IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 날씨 카드
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            border: Border.all(color: AppColors.primary),
                             borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const WeatherBox(),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
                             border: Border.all(color: mainBlue),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
-                              Icon(Icons.wb_sunny, size: 32, color: mainBlue),
-                              SizedBox(height: 8),
-                              Text('맑음', style: TextStyle(fontWeight: FontWeight.bold, color: mainBlue)),
-                              Text('23°C', style: TextStyle(color: mainBlue)),
-                              Text('습도 55%', style: TextStyle(color: mainBlue)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // 재고 요약 카드
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: mainBlue),
-                          ),
-                          child: Column(
-                            children: const [
-                              Icon(Icons.show_chart, size: 32, color: mainBlue),
-                              SizedBox(height: 8),
-                              Text('재고 현황 요약', style: TextStyle(fontWeight: FontWeight.bold, color: mainBlue)),
+                              Icon(Icons.show_chart, size: 28, color: mainBlue),
+                              SizedBox(height: 4),
+                              Text('재고 부족', style: TextStyle(fontWeight: FontWeight.bold, color: mainBlue)),
                               Text('남은 수량 100', style: TextStyle(color: mainBlue)),
                             ],
                           ),
@@ -145,16 +145,62 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // 재고 예측 추천
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: mainBlue),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TableCalendar(
+                    firstDay: DateTime.utc(2020, 1, 1),
+                    lastDay: DateTime.utc(2030, 12, 31),
+                    focusedDay: _focusedDay,
+                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                    onDaySelected: (selectedDay, focusedDay) {
+                      setState(() {
+                        _selectedDay = selectedDay;
+                        _focusedDay = focusedDay;
+                      });
+                    },
+                    eventLoader: (day) {
+                      return holidayEvents[DateTime.utc(day.year, day.month, day.day)] ?? [];
+                    },
+                    calendarStyle: CalendarStyle(
+                      markerDecoration: const BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      todayDecoration: BoxDecoration(
+                        color: mainBlue.withOpacity(0.6),
+                        shape: BoxShape.circle,
+                      ),
+                      selectedDecoration: BoxDecoration(
+                        color: mainBlue,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    headerStyle: const HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
+                    ),
+                  ),
+                ),
+                if (_selectedDay != null &&
+                    holidayEvents[DateTime.utc(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day)] != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      '📌 ${holidayEvents[DateTime.utc(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day)]!.join(', ')}',
+                      style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                const SizedBox(height: 24),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
-                  margin: const EdgeInsets.only(top: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: mainBlue),
                   ),
@@ -177,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           label: const Text('발주에 추가'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: mainBlue,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.background,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -185,6 +231,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: mainBlue),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('재고 부족 현황',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: mainBlue)),
+                      SizedBox(height: 8),
+                      Text('• 아이스티 파우더: 1개 남음', style: TextStyle(color: mainBlue)),
+                      Text('• 초코 파우더: 1개 남음', style: TextStyle(color: mainBlue)),
                     ],
                   ),
                 ),

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'package:refill/colors.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:refill/login_service/login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 
 class FindPasswordScreen extends StatefulWidget {
   const FindPasswordScreen({super.key});
@@ -30,7 +27,6 @@ class _FindPasswordScreenState extends State<FindPasswordScreen> {
     }
 
     try {
-      // Firestore에서 이메일 존재 여부 확인
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
           .where('email', isEqualTo: email)
@@ -50,7 +46,6 @@ class _FindPasswordScreenState extends State<FindPasswordScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,71 +58,78 @@ class _FindPasswordScreenState extends State<FindPasswordScreen> {
       ),
       backgroundColor: AppColors.background,
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(30, 60, 30, 60),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
+        padding: const EdgeInsets.fromLTRB(30, 20, 30, 0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: Text(
                   '비밀번호 찾기',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(height: 32),
-
-                const Text("이메일"),
-                const SizedBox(height: 8),
-                // 이메일 입력 필드만 유지
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: '이메일을 입력하세요',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              ),
+              const SizedBox(height: 40),
+              const Text("이메일"),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: '이메일을 입력하세요',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                ElevatedButton(
-                  onPressed: _resetPassword,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    '비밀번호 재설정 메일 보내기',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      );
-                    },
-                    child: const Text(
-                      "로그인 화면으로 돌아가기",
-                      style: TextStyle(color: AppColors.primary),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 80),
+            ],
           ),
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(30, 0, 30, 50),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 56,
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _resetPassword,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  '비밀번호 재설정 메일 보내기',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+              child: const Text(
+                "로그인 화면으로 돌아가기",
+                style: TextStyle(color: AppColors.primary),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
