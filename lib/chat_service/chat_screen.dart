@@ -1,10 +1,9 @@
-// 매장별 실시간 채팅 화면 (메시지 전송, 읽음 처리, 유저 정보 표시)
-
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'chat_message_widget.dart'; // 분리된 메시지 위젯 import
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -20,15 +19,14 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _storeId;
 
   Map<String, Map<String, dynamic>> _userInfoCache = {};
+  bool _isNoticeExpanded = false;
 
   @override
   void initState() {
     super.initState();
-
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("포그라운드 메시지 수신: ${message.notification?.title}");
+      print("포그라운드 메시지 수신: \${message.notification?.title}");
     });
-
     _loadUserStoreId();
   }
 
@@ -82,15 +80,44 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  String _getRoleEmoji(String role) {
-    switch (role) {
-      case 'owner':
-        return '⭐ '; // 점주 - 별모양
-      case 'manager':
-        return '💡 '; // 매니저 - 전구모양
-      default:
-        return '';    // 직원 - 없음
-    }
+  Stream<List<Map<String, dynamic>>> _noticeStream() {
+    return FirebaseFirestore.instance
+        .collection('chatRooms')
+        .doc(_storeId!)
+        .collection('notice')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+      return {
+        ...doc.data(),
+        'id': doc.id,
+      };
+    }).toList());
+  }
+
+  Future<void> _registerNotice(String message, String senderId) async {
+    if (_storeId == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('chatRooms')
+        .doc(_storeId!)
+        .collection('notice')
+        .add({
+      'text': message,
+      'senderId': senderId,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> _deleteNotice(String noticeId) async {
+    if (_storeId == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('chatRooms')
+        .doc(_storeId!)
+        .collection('notice')
+        .doc(noticeId)
+        .delete();
   }
 
   void _sendMessage() async {
@@ -143,6 +170,78 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
+          StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _noticeStream(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox();
+              final notices = snapshot.data!;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isNoticeExpanded = !_isNoticeExpanded;
+                  });
+                },
+                child: Container(
+                  width: double.infinity,
+                  color: Colors.yellow[100],
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            '📢 공지사항',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            _isNoticeExpanded ? Icons.expand_less : Icons.expand_more,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                      if (_isNoticeExpanded)
+                        ...notices.map((notice) {
+                          return GestureDetector(
+                            onLongPress: () {
+                              final myRole = _userInfoCache[currentUser?.uid]?['role'];
+                              if (myRole == 'owner' || myRole == 'manager') {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text("공지 삭제"),
+                                    content: const Text("해당 공지를 삭제하시겠습니까?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text("취소"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          _deleteNotice(notice['id']);
+                                        },
+                                        child: const Text("삭제"),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text("• ${notice['text']}")
+                              ,
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -152,20 +251,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   .orderBy('timestamp', descending: true)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      '아직 메시지가 없습니다.',
-                      style: TextStyle(fontSize: 16, color: AppColors.lightGray),
-                    ),
-                  );
-                }
-
                 final messages = snapshot.data!.docs;
-
                 return ListView.builder(
                   padding: const EdgeInsets.all(12),
                   reverse: true,
@@ -173,92 +262,25 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemBuilder: (context, index) {
                     final messageData = messages[index];
                     final senderId = messageData['senderId'];
-                    final message = messageData['text'] ?? '';
-                    final isMe = currentUser?.uid == senderId;
+                    _loadUserInfo(senderId); // user info 캐싱
 
-                    _loadUserInfo(senderId);
-
-                    final Map<String, dynamic> data = messageData.data() as Map<String, dynamic>;
-                    final List<String> readBy =
-                    (data.containsKey('readBy') && data['readBy'] is List)
-                        ? List<String>.from(data['readBy'])
-                        : [];
-
-                    if (!readBy.contains(currentUser?.uid)) {
-                      messageData.reference.update({
-                        'readBy': FieldValue.arrayUnion([currentUser!.uid])
-                      });
-                    }
-
-                    final userInfo = _userInfoCache[senderId];
-                    final name = userInfo?['name'] ?? '...';
-                    final role = userInfo?['role'] ?? 'staff';
-                    final displayName = "${_getRoleEmoji(role)}$name";
-
-                    return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Column(
-                        crossAxisAlignment:
-                        isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            displayName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: AppColors.borderDefault,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              if (isMe)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: Text(
-                                    readBy.length >= _members.length
-                                        ? '✔ 모두 읽음'
-                                        : '✔ ${readBy.length}/${_members.length}',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AppColors.borderDefault,
-                                    ),
-                                  ),
-                                ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                constraints: const BoxConstraints(maxWidth: 250), // ✅ 최대 너비 제한
-                                decoration: BoxDecoration(
-                                  color: isMe ? mainBlue : AppColors.borderDefault,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
-                                  message,
-                                  softWrap: true,            // ✅ 줄바꿈 허용
-                                  overflow: TextOverflow.visible,
-                                  style: TextStyle(
-                                    color: isMe ? AppColors.background : AppColors.black,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    return ChatMessageWidget(
+                      messageData: messageData,
+                      currentUserId: currentUser!.uid,
+                      userInfoCache: _userInfoCache,
+                      totalMembers: _members.length,
+                      storeId: _storeId!,
+                      onRegisterNotice: _registerNotice,
                     );
                   },
                 );
               },
             ),
           ),
-
           const Divider(height: 1),
-
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            color: AppColors.lightGray,
+            color: Colors.grey[100],
             child: Row(
               children: [
                 Expanded(
@@ -268,8 +290,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       hintText: '메시지를 입력하세요',
                       filled: true,
                       fillColor: AppColors.background,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: BorderSide.none,
