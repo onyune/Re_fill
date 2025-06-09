@@ -3,7 +3,7 @@ import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'ChatMessageWidget.dart'; // 분리된 메시지 위젯 import
+import 'chat_message_widget.dart'; // 분리된 메시지 위젯 import
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
