@@ -24,13 +24,6 @@ class AppSettingsSection extends StatelessWidget {
       children: [
         const Text('앱 설정',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('재고 부족 알림 설정'),
-          value: lowStockNotification,
-          onChanged: onToggleLowStock,
-          activeColor: AppColors.primary,
-        ),
         if (role != 'staff')
           ListTile(
             contentPadding: EdgeInsets.zero,
