@@ -48,7 +48,7 @@ class AppSettingsSection extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const AutoOrderTime()),
             ),
           ),
-        Divider(thickness: 0.8, color: Colors.grey.shade300),
+        Divider(thickness: 0.8, color: AppColors.borderDefault),
         const SizedBox(height: 24),
       ],
     );

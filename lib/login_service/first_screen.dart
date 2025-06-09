@@ -97,7 +97,7 @@ class FirstScreen extends StatelessWidget {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primary,
                                       elevation: 4,
-                                      shadowColor: Colors.black45,
+                                      shadowColor: AppColors.black,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -107,7 +107,7 @@ class FirstScreen extends StatelessWidget {
                                     child: const Text(
                                       '+ 새로운 매장 생성',
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.background,
                                         fontSize: 17,
                                         fontWeight: FontWeight.w800,
                                         letterSpacing: 0.5,
@@ -172,7 +172,7 @@ class FirstScreen extends StatelessWidget {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primary,
                                       elevation: 4,
-                                      shadowColor: Colors.black45,
+                                      shadowColor: AppColors.black,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),

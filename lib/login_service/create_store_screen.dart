@@ -17,7 +17,7 @@ class CreateStoreScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('새로운 매장 생성'),
         backgroundColor: AppColors.background,
-        foregroundColor: Colors.black,
+        foregroundColor: AppColors.black,
       ),
       resizeToAvoidBottomInset: true,
       body: GestureDetector(

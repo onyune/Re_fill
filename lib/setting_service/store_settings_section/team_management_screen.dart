@@ -97,7 +97,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
   Icon _getStarIcon(String role) {
     return Icon(
       Icons.star,
-      color: role == 'manager' ? Colors.amber : Colors.grey,
+      color: role == 'manager' ? Colors.amber : AppColors.borderDefault,
     );
   }
 

@@ -236,7 +236,7 @@ class _OrderScreenState extends State<OrderScreen> {
           style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.background,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: AppColors.background),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -256,7 +256,7 @@ class _OrderScreenState extends State<OrderScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
-              child: const Text('재고', style: TextStyle(color: Colors.white)),
+              child: const Text('재고', style: TextStyle(color: AppColors.background)),
             ),
           ),
         ],
@@ -315,7 +315,7 @@ class _OrderScreenState extends State<OrderScreen> {
                           const SizedBox(height: 4),
                           Text(
                             '현재재고 ${item['stock']} / 최소 ${item['min']}',
-                            style: TextStyle(color: isShort ? Colors.red : Colors.black54),
+                            style: TextStyle(color: isShort ? AppColors.error : AppColors.black),
                           ),
                         ],
                       ),
@@ -350,7 +350,7 @@ class _OrderScreenState extends State<OrderScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                 onPressed: _confirmAndPlaceOrder,
-                child: const Text('발주하기', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: const Text('발주하기', style: TextStyle(fontSize: 16, color: AppColors.background)),
               ),
             ),
           ],
@@ -371,11 +371,11 @@ class _OrderScreenState extends State<OrderScreen> {
       child: Container(
         height: 48,
         alignment: Alignment.center,
-        color: isSelected ? AppColors.primary : Colors.white,
+        color: isSelected ? AppColors.primary : AppColors.background,
         child: Text(
           categories[index],
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.primary,
+            color: isSelected ? AppColors.background : AppColors.primary,
             fontWeight: FontWeight.bold,
           ),
         ),

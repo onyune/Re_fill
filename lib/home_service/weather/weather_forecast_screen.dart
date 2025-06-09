@@ -172,7 +172,7 @@ class _WeatherForecastScreenState extends State<WeatherForecastScreen> {
       appBar: AppBar(
         title: const Text('날씨 예보'),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

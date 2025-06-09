@@ -106,9 +106,9 @@ class _LowStockScreenState extends State<LowStockScreen> {
         backgroundColor: AppColors.primary,
         title: const Text(
           '재고 부족 현황',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: AppColors.background),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -159,9 +159,9 @@ class _LowStockScreenState extends State<LowStockScreen> {
                     title: Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text(
                       "현재 수량: ${item['quantity']} / 최소 수량: ${item['minQuantity']}",
-                      style: const TextStyle(color: Colors.red),
+                      style: const TextStyle(color: AppColors.error),
                     ),
-                    trailing: const Icon(Icons.warning, color: Colors.red),
+                    trailing: const Icon(Icons.warning, color: AppColors.error),
                   );
                 },
               ),
@@ -173,7 +173,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                 onPressed: _navigateToOrderWithCounts,
-                child: const Text('발주 목록에 추가하기', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: const Text('발주 목록에 추가하기', style: TextStyle(fontSize: 16, color: AppColors.background)),
               ),
             ),
           ],
@@ -194,7 +194,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
       child: Container(
         height: 48,
         alignment: Alignment.center,
-        color: isSelected ? AppColors.primary : Colors.white,
+        color: isSelected ? AppColors.primary : AppColors.background,
         child: Text(
           categories[index],
           style: TextStyle(

@@ -158,7 +158,7 @@ class _StocksScreenState extends State<StocksScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("❗ 권한이 없어 재고를 수정할 수 없습니다."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -243,7 +243,7 @@ class _StocksScreenState extends State<StocksScreen> {
                           Text(
                             stockText,
                             style: TextStyle(
-                              color: isShort ? Colors.red : Colors.black54,
+                              color: isShort ? AppColors.error : AppColors.black,
                             ),
                           ),
                         ],
@@ -284,7 +284,7 @@ class _StocksScreenState extends State<StocksScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                 onPressed: _saveStockChanges,
-                child: const Text('재고 수정', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: const Text('재고 수정', style: TextStyle(fontSize: 16, color: AppColors.background)),
               ),
             ),
           ],

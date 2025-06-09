@@ -105,7 +105,7 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
           const SizedBox(height: 6),
           Text(
             weatherText,
-            style: const TextStyle(fontSize: 13, color: Colors.grey),
+            style: const TextStyle(fontSize: 13, color: AppColors.borderDefault),
           ),
           const SizedBox(height: 6),
           Text(
@@ -127,7 +127,7 @@ class _StockRecommendationBoxState extends State<StockRecommendationBox> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
               ),
-              child: const Text('예측 상세보기', style: TextStyle(color: Colors.white)),
+              child: const Text('예측 상세보기', style: TextStyle(color: AppColors.background)),
             ),
           ),
         ],

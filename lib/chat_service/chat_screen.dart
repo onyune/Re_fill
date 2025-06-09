@@ -206,7 +206,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: Colors.grey,
+                              color: AppColors.borderDefault,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -223,7 +223,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                         : '✔ ${readBy.length}/${_members.length}',
                                     style: const TextStyle(
                                       fontSize: 10,
-                                      color: Colors.grey,
+                                      color: AppColors.borderDefault,
                                     ),
                                   ),
                                 ),
@@ -231,7 +231,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                 constraints: const BoxConstraints(maxWidth: 250), // ✅ 최대 너비 제한
                                 decoration: BoxDecoration(
-                                  color: isMe ? mainBlue : Colors.grey[300],
+                                  color: isMe ? mainBlue : AppColors.borderDefault,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Text(
@@ -239,7 +239,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   softWrap: true,            // ✅ 줄바꿈 허용
                                   overflow: TextOverflow.visible,
                                   style: TextStyle(
-                                    color: isMe ? Colors.white : Colors.black,
+                                    color: isMe ? AppColors.background : AppColors.black,
                                   ),
                                 ),
                               ),
@@ -258,7 +258,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            color: Colors.grey[100],
+            color: AppColors.borderDefault,
             child: Row(
               children: [
                 Expanded(
