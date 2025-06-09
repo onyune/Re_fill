@@ -5,7 +5,6 @@ import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-
 class AutoOrderTime extends StatefulWidget {
   const AutoOrderTime({super.key});
 
@@ -18,6 +17,7 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
   int selectedMinute = 0;
   String selectedPeriod = 'AM';
   String savedTime = '';
+  bool isAutoOrderEnabled = true;
 
   final List<String> periods = ['AM', 'PM'];
   final List<int> hours = List.generate(12, (index) => index + 1);
@@ -26,20 +26,39 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
   @override
   void initState() {
     super.initState();
-    _loadSavedTime();
+    _loadSavedData();
   }
 
-  Future<void> _loadSavedTime() async {
+  Future<void> _loadSavedData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       savedTime = prefs.getString('auto_order_time') ?? '';
+      isAutoOrderEnabled = prefs.getBool('auto_order_enabled') ?? true;
     });
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final storeId = userDoc['storeId'];
+      final storeDoc = await FirebaseFirestore.instance.collection('stores').doc(storeId).get();
+      if (storeDoc.exists) {
+        final storeData = storeDoc.data();
+        final enabled = storeData?['autoOrderEnabled'];
+        if (enabled != null) {
+          setState(() {
+            isAutoOrderEnabled = enabled;
+          });
+        }
+      }
+    }
   }
 
   Future<void> _saveTime() async {
     final prefs = await SharedPreferences.getInstance();
     final time = '$selectedPeriod ${selectedHour.toString().padLeft(2, '0')}:${selectedMinute.toString().padLeft(2, '0')}';
     await prefs.setString('auto_order_time', time);
+    await prefs.setBool('auto_order_enabled', isAutoOrderEnabled);
+
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
@@ -47,13 +66,16 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
 
       await FirebaseFirestore.instance.collection('stores').doc(storeId).update({
         'autoOrderTime': time,
+        'autoOrderEnabled': isAutoOrderEnabled,
       });
     }
+
     setState(() {
       savedTime = time;
     });
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('자동 발주 시간이 저장되었습니다.')),
+      const SnackBar(content: Text('자동 발주 설정이 저장되었습니다.')),
     );
   }
 
@@ -63,7 +85,11 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
       itemExtent: 40,
       diameterRatio: 1.2,
       onSelectedItemChanged: (index) => onSelected(list[index]),
-      children: list.map((item) => Center(child: Text('$item', style: const TextStyle(fontSize: 20, color: AppColors.primary)))).toList(),
+      children: list
+          .map((item) => Center(
+        child: Text('$item', style: const TextStyle(fontSize: 20, color: AppColors.primary)),
+      ))
+          .toList(),
     );
   }
 
@@ -73,7 +99,11 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
       itemExtent: 40,
       diameterRatio: 1.2,
       onSelectedItemChanged: (index) => setState(() => selectedPeriod = periods[index]),
-      children: periods.map((p) => Center(child: Text(p, style: const TextStyle(fontSize: 20, color: AppColors.primary)))).toList(),
+      children: periods
+          .map((p) => Center(
+        child: Text(p, style: const TextStyle(fontSize: 20, color: AppColors.primary)),
+      ))
+          .toList(),
     );
   }
 
@@ -100,17 +130,64 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '자동 발주 활성화',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                Switch(
+                  value: isAutoOrderEnabled,
+                  activeColor: AppColors.primary,
+                  onChanged: (value) {
+                    setState(() {
+                      isAutoOrderEnabled = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // 🔽 여기에 안내 문구 추가
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '※ 원활한 발주를 위해 발주 마감 최소 10분 전으로 시간 설정해주세요.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+          ),
+
           Expanded(
             child: Center(
-              child: SizedBox(
-                height: 180,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(width: 80, child: _buildPeriodPicker()),
-                    SizedBox(width: 80, child: _buildPicker(hours, selectedHour, (v) => setState(() => selectedHour = v))),
-                    SizedBox(width: 80, child: _buildPicker(minutes, selectedMinute, (v) => setState(() => selectedMinute = v))),
-                  ],
+              child: AbsorbPointer(
+                absorbing: !isAutoOrderEnabled,
+                child: Opacity(
+                  opacity: isAutoOrderEnabled ? 1.0 : 0.4,
+                  child: SizedBox(
+                    height: 180,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(width: 80, child: _buildPeriodPicker()),
+                        SizedBox(width: 80, child: _buildPicker(hours, selectedHour, (v) => setState(() => selectedHour = v))),
+                        SizedBox(width: 80, child: _buildPicker(minutes, selectedMinute, (v) => setState(() => selectedMinute = v))),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -127,4 +204,3 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
     );
   }
 }
-
