@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
-import 'auto_order_time.dart';
+import 'auto_order/auto_order_time.dart';
 import 'min_stock.dart';
 
 class AppSettingsSection extends StatelessWidget {
