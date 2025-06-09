@@ -57,11 +57,14 @@ Future<void> autoOrderExecution(String storeId) async {
   }
 
   if (orderItems.isNotEmpty) {
-    await FirebaseFirestore.instance.collection('orders').add({
-      'storeId': storeId,
-      'createdAt': now,
-      'items': orderItems,
-      'autoOrdered': true,
+    await FirebaseFirestore.instance
+        .collection('orders')
+        .doc(storeId)
+        .collection('orderList')
+        .add({
+          'autoOrdered': true,
+          'createdAt': now,
+          'items': orderItems,
     });
 
     print("✅ 자동 발주 완료: ${orderItems.length}개 항목");
