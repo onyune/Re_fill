@@ -174,8 +174,9 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
       appBar: AppBar(
         title: const Text('재고 예측 현황'),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
       ),
+      backgroundColor: AppColors.background,
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -192,7 +193,7 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   '※ 예측 수요는 날씨/공휴일/요일 기반으로 Cloud Functions에서 계산됩니다.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: AppColors.borderDefault),
                 ),
               ],
             ),
@@ -233,7 +234,7 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
                 if (selectedItems.isNotEmpty)
                   Text(
                     '${selectedItems.length}개 선택됨',
-                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                    style: const TextStyle(fontSize: 13, color: AppColors.black),
                   ),
                 const SizedBox(height: 4),
                 SizedBox(
@@ -265,7 +266,7 @@ class _LowStockForecastScreenState extends State<LowStockForecastScreen> {
                     },
                     child: const Text(
                       '발주 목록에 추가하기',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: AppColors.background),
                     ),
                   ),
                 ),

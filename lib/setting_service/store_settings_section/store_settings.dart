@@ -1,7 +1,7 @@
 // 설정 화면 > 매장 변경, 팀 관리
 
 import 'package:flutter/material.dart';
-
+import 'package:refill/colors.dart';
 import 'team_management_screen.dart';
 
 class StoreSettingsSection extends StatelessWidget {
@@ -28,7 +28,7 @@ class StoreSettingsSection extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const TeamManagementScreen()),
             ),
           ),
-        Divider(thickness: 0.8, color: Colors.grey.shade300),
+        Divider(thickness: 0.8, color: AppColors.borderDefault),
         const SizedBox(height: 24),
       ],
     );

@@ -98,7 +98,7 @@ class _FindIdScreenState extends State<FindIdScreen> {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: AppColors.black,
                     ),
                   ),
                 ),
@@ -137,7 +137,7 @@ class _FindIdScreenState extends State<FindIdScreen> {
             ),
             child: const Text(
               "아이디 조회",
-              style: TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: AppColors.background, fontSize: 16),
             ),
           ),
         ),

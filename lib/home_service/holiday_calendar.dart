@@ -55,7 +55,7 @@ class _HolidayCalendarState extends State<HolidayCalendar> {
             },
             calendarStyle: CalendarStyle(
               markerDecoration: const BoxDecoration(
-                color: Colors.redAccent,
+                color: AppColors.error,
                 shape: BoxShape.circle,
               ),
               todayDecoration: BoxDecoration(

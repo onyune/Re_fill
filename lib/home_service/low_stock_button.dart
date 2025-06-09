@@ -1,6 +1,7 @@
 // 홈 화면 > 재고부족 현황 보러가기 버튼
 
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
 import 'package:refill/home_service/low_stock_screen.dart';
 
 class LowStockButton extends StatelessWidget {
@@ -20,7 +21,7 @@ class LowStockButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFFEFEFEF),
+          color: AppColors.lightGray,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(

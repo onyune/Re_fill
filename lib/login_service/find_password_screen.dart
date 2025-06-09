@@ -109,7 +109,7 @@ class _FindPasswordScreenState extends State<FindPasswordScreen> {
                 ),
                 child: const Text(
                   '비밀번호 재설정 메일 보내기',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(color: AppColors.background, fontSize: 16),
                 ),
               ),
             ),

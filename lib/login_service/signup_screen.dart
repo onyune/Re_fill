@@ -262,7 +262,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         child: Text(
                           _idMessage!,
                           style: TextStyle(
-                            color: _idMessageColor ?? Colors.black,
+                            color: _idMessageColor ?? AppColors.black,
                             fontSize: 13,
                           ),
                         ),
