@@ -43,14 +43,27 @@ class _LowStockScreenState extends State<LowStockScreen> {
         .collection('items')
         .get();
 
+    final templateSnap = await FirebaseFirestore.instance
+        .collection('orderTemplates')
+        .get();
+
+    final categoryMap = {
+      for (final doc in templateSnap.docs)
+        (doc.data()['name'] as String?)?.trim() ?? doc.id.trim(): doc.data()['category'] ?? '기타',
+    };
+
     List<Map<String, dynamic>> result = [];
 
     for (final doc in stockSnap.docs) {
       final data = doc.data();
-      final name = data['name'] ?? doc.id;
+      final rawName = data['name'] ?? doc.id;
+      final name = rawName.trim();
       final quantity = data['quantity'] ?? 0;
       final minQuantity = data['minQuantity'] ?? 0;
-      final category = data['category'] ?? '기타';
+
+      // category 필드 없을 경우 템플릿 기준으로 보완
+      final docId = doc.id.trim();
+      final category = data['category'] ?? categoryMap[docId] ?? '기타';
 
       if (quantity < minQuantity) {
         result.add({
@@ -68,6 +81,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
       _filterItems();
     });
   }
+
 
   void _filterItems() {
     final selected = categories[selectedCategory];
