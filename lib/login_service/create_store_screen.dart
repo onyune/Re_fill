@@ -82,6 +82,7 @@ class CreateStoreScreen extends StatelessWidget {
                     'createdAt': Timestamp.now(),
                     'members': [],
                     'storeType': '카페',
+                    'autoOrderTime': 'AM 11:00',
                   });
 
                   // 🔹 chatRoom 생성

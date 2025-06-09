@@ -13,9 +13,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+<<<<<<< HEAD
+
+=======
   String? storeName;
   bool isLoading = true;
   static const mainBlue = AppColors.primary;
+>>>>>>> a5d1e7aa1258e5ba88c3c0b5f70a804c14a9bca3
 
   final Map<DateTime, List<String>> holidayEvents = {
     DateTime.utc(2025, 5, 5): ['어린이날'],
@@ -72,12 +76,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+<<<<<<< HEAD
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
+=======
       appBar: AppBar(
         title: const Text("홈"),
         backgroundColor: mainBlue,
         foregroundColor: AppColors.background,
       ),
       body: SafeArea(
+>>>>>>> a5d1e7aa1258e5ba88c3c0b5f70a804c14a9bca3
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(

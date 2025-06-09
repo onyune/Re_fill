@@ -38,12 +38,19 @@ dependencies:
   firebase_auth: ^4.20.0
   google_sign_in: ^6.1.4
   firebase_database: ^10.4.5
-
+  cloud_functions: ^4.6.5
   cloud_firestore: ^4.13.0
   firebase_messaging: ^14.6.5
   geolocator: ^10.1.0 #위치가져오기
   http: ^0.13.5 #날씨 API 호출
   table_calendar: ^3.0.9
+<<<<<<< HEAD
+  intl: ^0.18.1  # 날씨API-> 5일 날씨 확인
+  provider: ^6.1.1
+  shared_preferences: ^2.2.2 #아마도 자동발주시간설정에 쓰일것
+
+=======
+>>>>>>> a5d1e7aa1258e5ba88c3c0b5f70a804c14a9bca3
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -69,6 +76,22 @@ flutter:
   uses-material-design: true
   assets:
     - assets/google_logo.png
+<<<<<<< HEAD
+    - assets/images/create_store.png
+    - assets/images/invite_code.png
+    - assets/images/app_icon.png
+
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"
+=======
     - assets/images/
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -104,3 +127,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+>>>>>>> a5d1e7aa1258e5ba88c3c0b5f70a804c14a9bca3
