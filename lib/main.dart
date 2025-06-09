@@ -11,6 +11,8 @@ import 'providers/holiday_provider.dart';
 import 'providers/order_provider.dart';
 import 'home_service/low_stock_forecast_screen.dart';
 import 'package:refill/setting_service/app_settings_section/auto_order/background_service.dart';
+import 'package:refill/setting_service/store_settings_section/order_history_screen.dart';
+
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -70,6 +72,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/main': (context) => const MainNavigation(),
         '/lowStockForecast': (context) => const LowStockForecastScreen(),
+        '/orderHistory': (context) => const OrderHistoryScreen(),
       },
     );
   }

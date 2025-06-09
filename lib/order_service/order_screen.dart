@@ -181,6 +181,22 @@ class _OrderScreenState extends State<OrderScreen> {
 
     try {
       await batch.commit();
+      final now = DateTime.now();
+      final orderItems = items
+          .where((item) => item['count'] > 0)
+          .map((item) => {
+        'name': item['name'],
+        'count': item['count'],
+      }).toList();
+
+      await FirebaseFirestore.instance.collection('orders').add({
+        'storeId': storeId,
+        'createdAt': now,
+        'items': orderItems,
+        'autoOrdered': false, // 수동 발주니까 false
+      });
+
+      print('✅ 발주 이력 저장 완료');
 
       await _loadOrderData();
 
