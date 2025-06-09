@@ -4,6 +4,14 @@ Future<void> autoOrderExecution(String storeId) async {
   final now = DateTime.now();
   final todayStart = DateTime(now.year, now.month, now.day);
 
+  // ✅ 자동 발주 비활성화 여부 확인
+  final storeDoc = await FirebaseFirestore.instance.collection('stores').doc(storeId).get();
+  final storeData = storeDoc.data();
+  if (storeData == null || storeData['autoOrderEnabled'] != true) {
+    print("🚫 자동 발주 비활성화 상태입니다. 실행 중단.");
+    return;
+  }
+
   // 중복 자동 발주 방지: 오늘 이미 실행된 자동 발주가 있는지 확인
   final alreadyOrdered = await FirebaseFirestore.instance
       .collection('orders')
