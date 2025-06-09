@@ -3,7 +3,7 @@ import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'ChatMessageWidget.dart'; // 분리된 메시지 위젯 import
+import 'chat_message_widget.dart'; // 분리된 메시지 위젯 import
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -120,17 +120,6 @@ class _ChatScreenState extends State<ChatScreen> {
         .delete();
   }
 
-  String _getRoleEmoji(String role) {
-    switch (role) {
-      case 'owner':
-        return '⭐ ';
-      case 'manager':
-        return '💡 ';
-      default:
-        return '';
-    }
-  }
-
   void _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty || _storeId == null) return;
@@ -214,10 +203,6 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       if (_isNoticeExpanded)
                         ...notices.map((notice) {
-                          final sender = _userInfoCache[notice['senderId']];
-                          final name = sender?['name'] ?? '';
-                          final role = sender?['role'] ?? 'staff';
-                          final displayName = "\${_getRoleEmoji(role)}\$name";
 
                           return GestureDetector(
                             onLongPress: () {
@@ -272,7 +257,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 final messages = snapshot.data!.docs;
-
                 return ListView.builder(
                   padding: const EdgeInsets.all(12),
                   reverse: true,

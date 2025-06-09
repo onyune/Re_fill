@@ -47,7 +47,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           : StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('orders')
-            .where('storeId', isEqualTo: storeId)
+            .doc(storeId)
+            .collection('orderList')
             .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
