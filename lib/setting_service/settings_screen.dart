@@ -173,7 +173,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             UserCard(userName: userName, role: role),
             const SizedBox(height: 32),
-
+            ListTile(
+              tileColor: Colors.grey.shade100,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              title: const Text(
+                '발주 이력 보기',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pushNamed(context, '/orderHistory');
+              },
+            ),
+            const SizedBox(height: 24),
             if (role == 'owner') ...[
               InviteCodeSection(
                 isInviteCodeGenerated: isInviteCodeGenerated,
