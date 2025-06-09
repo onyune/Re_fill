@@ -12,7 +12,7 @@ import 'providers/order_provider.dart';
 import 'home_service/low_stock_forecast_screen.dart';
 import 'package:refill/setting_service/app_settings_section/auto_order/background_service.dart';
 import 'package:refill/setting_service/store_settings_section/order_history_screen.dart';
-
+import 'package:refill/setting_service/app_settings_section/auto_order/auto_order_time.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -73,6 +73,7 @@ class MyApp extends StatelessWidget {
         '/main': (context) => const MainNavigation(),
         '/lowStockForecast': (context) => const LowStockForecastScreen(),
         '/orderHistory': (context) => const OrderHistoryScreen(),
+        '/autoOrderTime': (context) => const AutoOrderTime(),
       },
     );
   }
