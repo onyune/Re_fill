@@ -2,6 +2,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 Future<void> autoOrderExecution(String storeId) async {
   final now = DateTime.now();
+  final todayStart = DateTime(now.year, now.month, now.day);
+
+  // 중복 자동 발주 방지: 오늘 이미 실행된 자동 발주가 있는지 확인
+  final alreadyOrdered = await FirebaseFirestore.instance
+      .collection('orders')
+      .where('storeId', isEqualTo: storeId)
+      .where('autoOrdered', isEqualTo: true)
+      .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(todayStart))
+      .get();
+
+  if (alreadyOrdered.docs.isNotEmpty) {
+    print("⚠️ 이미 오늘 자동 발주가 실행됨. 중복 방지");
+    return;
+  }
+
   final doc = await FirebaseFirestore.instance
       .collection('recommendations')
       .doc(storeId)
@@ -25,7 +40,7 @@ Future<void> autoOrderExecution(String storeId) async {
           .collection('stocks')
           .doc(storeId)
           .collection('items')
-          .doc(item['name']); // 또는 고유 ID가 있다면 그걸 써도 됨
+          .doc(item['name']);
 
       await stockRef.update({
         'quantity': FieldValue.increment(recommendedExtra),
