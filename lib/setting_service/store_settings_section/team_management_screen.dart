@@ -120,6 +120,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.background,
       ),
+      backgroundColor: AppColors.background,
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(

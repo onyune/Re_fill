@@ -174,6 +174,7 @@ class _WeatherForecastScreenState extends State<WeatherForecastScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.background,
       ),
+      backgroundColor: AppColors.background,
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView.separated(

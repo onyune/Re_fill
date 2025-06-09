@@ -174,7 +174,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             UserCard(userName: userName, role: role),
             const SizedBox(height: 32),
             ListTile(
-              tileColor: AppColors.borderDefault,
+              tileColor: AppColors.lightGray,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               title: const Text(
                 '발주 이력 보기',

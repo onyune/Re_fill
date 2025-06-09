@@ -21,7 +21,7 @@ class LowStockButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: AppColors.lightGray,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(

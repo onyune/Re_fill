@@ -159,7 +159,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   return const Center(
                     child: Text(
                       '아직 메시지가 없습니다.',
-                      style: TextStyle(fontSize: 16, color: AppColors.borderDefault),
+                      style: TextStyle(fontSize: 16, color: AppColors.lightGray),
                     ),
                   );
                 }
@@ -206,7 +206,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: AppColors.borderDefault,
+                              color: AppColors.lightGray,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -223,7 +223,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                         : '✔ ${readBy.length}/${_members.length}',
                                     style: const TextStyle(
                                       fontSize: 10,
-                                      color: AppColors.borderDefault,
+                                      color: AppColors.lightGray,
                                     ),
                                   ),
                                 ),
@@ -231,7 +231,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                 constraints: const BoxConstraints(maxWidth: 250), // ✅ 최대 너비 제한
                                 decoration: BoxDecoration(
-                                  color: isMe ? mainBlue : AppColors.borderDefault,
+                                  color: isMe ? mainBlue : AppColors.lightGray,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Text(
@@ -258,7 +258,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            color: AppColors.borderDefault,
+            color: AppColors.lightGray,
             child: Row(
               children: [
                 Expanded(
