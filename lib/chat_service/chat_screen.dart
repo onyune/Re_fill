@@ -3,7 +3,7 @@ import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'chat_message_widget.dart'; // 분리된 메시지 위젯 import
+import 'ChatMessageWidget.dart'; // 분리된 메시지 위젯 import
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -203,6 +203,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       if (_isNoticeExpanded)
                         ...notices.map((notice) {
+
                           return GestureDetector(
                             onLongPress: () {
                               final myRole = _userInfoCache[currentUser?.uid]?['role'];
@@ -254,6 +255,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
+
                 final messages = snapshot.data!.docs;
                 return ListView.builder(
                   padding: const EdgeInsets.all(12),
