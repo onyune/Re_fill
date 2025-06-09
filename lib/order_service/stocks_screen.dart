@@ -17,21 +17,28 @@ class _StocksScreenState extends State<StocksScreen> {
   String _searchKeyword = '';
   TextEditingController _searchController = TextEditingController();
 
+  final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '티', '기타'];
+  int selectedCategory = 0;
+
   @override
   void initState() {
     super.initState();
     _loadStockData();
+    _searchController.addListener(_filterStockItems);
   }
 
   void _filterStockItems() {
+    final selected = categories[selectedCategory];
+    final keyword = _searchKeyword.trim();
+
     setState(() {
       filteredStockItems = stockItems
-          .map((item) => {...item})
-          .where((item) => item['name']
-          .toString()
-          .toLowerCase()
-          .contains(_searchKeyword.toLowerCase()))
-
+          .where((item) {
+        final matchCategory = item['category'] == selected;
+        final matchSearch = item['name'].toString().toLowerCase().contains(keyword.toLowerCase());
+        return matchCategory && matchSearch;
+      })
+          .map((e) => {...e}) // 복사
           .toList();
     });
   }
@@ -68,7 +75,8 @@ class _StocksScreenState extends State<StocksScreen> {
         'defaultQuantity': template['defaultQuantity'] ?? 1,
         'stock': currentQty,
         'min': stock?['minQuantity'] ?? 0,
-        'count': currentQty, // 현재 재고 수량으로 초기화
+        'count': currentQty,
+        'category': template['category'] ?? '기타',  // 🔥 카테고리 필드 중요!
       };
     }).toList();
 
@@ -90,8 +98,7 @@ class _StocksScreenState extends State<StocksScreen> {
       }
     }
 
-    final changedItems =
-    stockItems.where((item) => item['stock'] != item['count']).toList();
+    final changedItems = stockItems.where((item) => item['stock'] != item['count']).toList();
 
     if (changedItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,7 +155,7 @@ class _StocksScreenState extends State<StocksScreen> {
 
     try {
       await batch.commit();
-      await _loadStockData(); // 🔁 수정 후 UI 갱신
+      await _loadStockData();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("재고가 수정되었습니다.")),
@@ -162,6 +169,30 @@ class _StocksScreenState extends State<StocksScreen> {
         ),
       );
     }
+  }
+
+  Widget _buildCategoryCell(int index) {
+    final isSelected = selectedCategory == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedCategory = index;
+        });
+        _filterStockItems();
+      },
+      child: Container(
+        height: 48,
+        alignment: Alignment.center,
+        color: isSelected ? AppColors.primary : AppColors.background,
+        child: Text(
+          categories[index],
+          style: TextStyle(
+            color: isSelected ? AppColors.background : AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -195,8 +226,8 @@ class _StocksScreenState extends State<StocksScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.search, color: AppColors.primary),
-                  SizedBox(width: 8),
+                  const Icon(Icons.search, color: AppColors.primary),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       controller: _searchController,
@@ -204,7 +235,7 @@ class _StocksScreenState extends State<StocksScreen> {
                         _searchKeyword = value;
                         _filterStockItems();
                       },
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: '검색',
                       ),
@@ -215,6 +246,17 @@ class _StocksScreenState extends State<StocksScreen> {
             ),
 
             const SizedBox(height: 16),
+
+            // 카테고리 필터 Table
+            Table(
+              border: TableBorder.all(color: AppColors.primary),
+              children: [
+                TableRow(children: List.generate(3, (i) => _buildCategoryCell(i))),
+                TableRow(children: List.generate(3, (i) => _buildCategoryCell(i + 3))),
+              ],
+            ),
+
+            const SizedBox(height: 20),
 
             // 📦 재고 항목 리스트
             Expanded(
