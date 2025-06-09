@@ -165,7 +165,7 @@ class _AutoOrderTimeState extends State<AutoOrderTime> {
                 '※ 원활한 발주를 위해 발주 마감 최소 10분 전으로 시간 설정해주세요.',
                 style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.lightGray,
+                  color: AppColors.borderDefault,
                 ),
               ),
             ),
