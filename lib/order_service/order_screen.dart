@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:refill/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'stocks_screen.dart';
 
 class OrderScreen extends StatefulWidget {
-  const OrderScreen({super.key});
+  final Map<String, int>? prefilledCounts;
+  const OrderScreen({super.key, this.prefilledCounts});
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
@@ -25,7 +25,7 @@ class _OrderScreenState extends State<OrderScreen> {
   void initState() {
     super.initState();
     _loadOrderData();
-    _searchController.addListener(_filterItemsByCategory); // 검색어 변경 시 필터링
+    _searchController.addListener(_filterItemsByCategory);
   }
 
   @override
@@ -38,24 +38,35 @@ class _OrderScreenState extends State<OrderScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid).get();
     final storeId = userDoc['storeId'];
 
-    final orderTemplateSnap = await FirebaseFirestore.instance.collection('orderTemplates').get();
     final stockSnap = await FirebaseFirestore.instance
         .collection('stocks')
         .doc(storeId)
         .collection('items')
         .get();
 
-    final stockMap = {
-      for (var doc in stockSnap.docs) doc.id: doc.data()
-    };
+    final orderTemplateSnap = await FirebaseFirestore.instance
+        .collection('orderTemplates')
+        .get();
+
+    final stockMap = { for (var doc in stockSnap.docs) doc.id: doc.data() };
 
     final combined = orderTemplateSnap.docs.map((doc) {
       final name = doc.id;
       final template = doc.data();
-      final stock = stockMap[name.replaceAll(' ', '')]; // ← 이거 중요함!!!
+      final stock = stockMap[name];
+      int count = 0;
+
+      if (widget.prefilledCounts != null && widget.prefilledCounts!.containsKey(name)) {
+        count = widget.prefilledCounts![name]!;
+      } else {
+        // 항상 최신 stock 기준으로 초기화
+        count = 0;
+      }
 
       return {
         'name': name,
@@ -63,54 +74,105 @@ class _OrderScreenState extends State<OrderScreen> {
         'defaultQuantity': template['defaultQuantity'] ?? 1,
         'stock': stock?['quantity'] ?? 0,
         'min': stock?['minQuantity'] ?? 0,
-        'count': 0,
+        'count': count,
         'category': template['category'] ?? '기타',
       };
     }).toList();
 
     setState(() {
       items = combined;
-      _filterItemsByCategory(); // ✅ 필터링도 강제로 다시 해줘야 UI에 반영됨
+      _filterItemsByCategory();
     });
   }
 
+  void _updateCount(String name, int count) {
+    setState(() {
+      final itemIndex = items.indexWhere((e) => e['name'] == name);
+      if (itemIndex != -1) items[itemIndex]['count'] = count;
+
+      final filteredIndex = filteredItems.indexWhere((e) => e['name'] == name);
+      if (filteredIndex != -1) filteredItems[filteredIndex]['count'] = count;
+
+      filteredItems = List<Map<String, dynamic>>.from(filteredItems); // 강제 rebuild
+    });
+  }
 
   void _filterItemsByCategory() {
     final selected = categories[selectedCategory];
     final keyword = _searchController.text.trim();
-
     setState(() {
       filteredItems = items.where((item) {
         final matchCategory = item['category'] == selected;
         final matchSearch = item['name'].toString().contains(keyword);
         return matchCategory && matchSearch;
-      }).toList();
+      }).map((e) => Map<String, dynamic>.from(e)).toList();
     });
+  }
+
+  Future<void> _confirmAndPlaceOrder() async {
+    final selectedItems = items.where((item) => item['count'] > 0).toList();
+
+    if (selectedItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("발주할 품목이 없습니다.")),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("발주 확인"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("선택한 품목들로 발주를 진행할까요?\n"),
+                ...selectedItems.map((item) => Text(
+                  '• ${item['name']} (${item['count']}개)',
+                  style: const TextStyle(fontSize: 14),
+                )),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("취소")),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("확인")),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _placeOrder();
+    }
   }
 
   Future<void> _placeOrder() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid).get();
     final storeId = userDoc['storeId'];
     final batch = FirebaseFirestore.instance.batch();
 
     for (var item in items) {
       final count = item['count'];
       final itemName = item['name'];
-      final currentQty = item['stock']; // 이미 로딩된 현재 재고 수량
-
+      final currentQty = item['stock'];
       if (count <= 0) continue;
 
       final newQty = currentQty + count;
-      final docId = itemName.replaceAll(' ', '');
-
       final docRef = FirebaseFirestore.instance
           .collection('stocks')
           .doc(storeId)
           .collection('items')
-          .doc(docId);
+          .doc(itemName);
 
       batch.set(docRef, {
         'quantity': newQty,
@@ -119,11 +181,46 @@ class _OrderScreenState extends State<OrderScreen> {
 
     try {
       await batch.commit();
-      await _loadOrderData(); // UI 재갱신
+      final now = DateTime.now();
+      final orderItems = items
+          .where((item) => item['count'] > 0)
+          .map((item) => {
+        'name': item['name'],
+        'count': item['count'],
+      }).toList();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("발주가 완료되었습니다.")),
-      );
+      await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(storeId)
+          .collection('orderList')
+          .add({
+        'createdAt': now,
+        'items': orderItems,
+        'autoOrdered': false,
+      });
+
+      print('✅ 발주 이력 저장 완료');
+
+      await _loadOrderData();
+
+      setState(() {
+        for (final item in items) {
+          item['count'] = 0;           // UI에서도 0으로
+        }
+        _filterItemsByCategory();      // 필터링도 갱신
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("발주가 완료되었습니다.")),
+        );
+
+        if (widget.prefilledCounts != null) {
+          Navigator.of(context).pop('ordered');
+        }
+      }
+
+
     } catch (e) {
       print("발주 중 오류 발생: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -132,38 +229,37 @@ class _OrderScreenState extends State<OrderScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.background, //여기 색 다르게 되어있어서 수정했어용
       appBar: AppBar(
         title: const Text(
           '발주',
-          style: TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
         ),
+        backgroundColor: AppColors.background,
+        iconTheme: const IconThemeData(color: AppColors.background),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const StocksScreen()),
                 );
+
+                if (result == 'updated') {
+                  _loadOrderData();
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
-              child: const Text('재고', style: TextStyle(color: Colors.white)),
+              child: const Text('재고', style: TextStyle(color: AppColors.background)),
             ),
           ),
         ],
@@ -172,7 +268,6 @@ class _OrderScreenState extends State<OrderScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
-            // 검색창
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -196,25 +291,18 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // 카테고리 버튼
             Table(
               border: TableBorder.all(color: AppColors.primary),
               children: [
-                TableRow(
-                  children: List.generate(3, (i) => _buildCategoryCell(i)),
-                ),
-                TableRow(
-                  children: List.generate(3, (i) => _buildCategoryCell(i + 3)),
-                ),
+                TableRow(children: List.generate(3, (i) => _buildCategoryCell(i))),
+                TableRow(children: List.generate(3, (i) => _buildCategoryCell(i + 3))),
               ],
             ),
-
             const SizedBox(height: 20),
-
-            // 발주 리스트
             Expanded(
-              child: ListView.separated(
+              child: filteredItems.isEmpty
+                  ? const Center(child: Text("등록된 품목이 없습니다."))
+                  : ListView.separated(
                 itemCount: filteredItems.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {
@@ -226,16 +314,11 @@ class _OrderScreenState extends State<OrderScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            item['name'],
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
+                          Text(item['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
                           Text(
                             '현재재고 ${item['stock']} / 최소 ${item['min']}',
-                            style: TextStyle(
-                              color: isShort ? Colors.red : Colors.black54,
-                            ),
+                            style: TextStyle(color: isShort ? AppColors.error : AppColors.black),
                           ),
                         ],
                       ),
@@ -244,18 +327,16 @@ class _OrderScreenState extends State<OrderScreen> {
                           IconButton(
                             icon: const Icon(Icons.remove, color: AppColors.primary),
                             onPressed: () {
-                              setState(() {
-                                if (item['count'] > 0) item['count']--;
-                              });
+                              final newCount = (item['count'] - 1).clamp(0, 99);
+                              _updateCount(item['name'], newCount);
                             },
                           ),
                           Text('${item['count']}', style: const TextStyle(fontSize: 16)),
                           IconButton(
                             icon: const Icon(Icons.add, color: AppColors.primary),
                             onPressed: () {
-                              setState(() {
-                                item['count']++;
-                              });
+                              final newCount = item['count'] + 1;
+                              _updateCount(item['name'], newCount);
                             },
                           ),
                         ],
@@ -266,15 +347,13 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // 발주 버튼
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                onPressed: _placeOrder,
-                child: const Text('발주하기', style: TextStyle(fontSize: 16, color: Colors.white)),
+                onPressed: _confirmAndPlaceOrder,
+                child: const Text('발주하기', style: TextStyle(fontSize: 16, color: AppColors.background)),
               ),
             ),
           ],
@@ -295,11 +374,11 @@ class _OrderScreenState extends State<OrderScreen> {
       child: Container(
         height: 48,
         alignment: Alignment.center,
-        color: isSelected ? AppColors.primary : Colors.white,
+        color: isSelected ? AppColors.primary : AppColors.background,
         child: Text(
           categories[index],
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.primary,
+            color: isSelected ? AppColors.background : AppColors.primary,
             fontWeight: FontWeight.bold,
           ),
         ),

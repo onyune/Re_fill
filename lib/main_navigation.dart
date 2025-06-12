@@ -98,6 +98,7 @@ class _MainNavigationState extends State<MainNavigation> {
         },
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.borderDefault,
+        backgroundColor: AppColors.background,
         type: BottomNavigationBarType.fixed,
         items: [
           const BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
@@ -116,14 +117,14 @@ class _MainNavigationState extends State<MainNavigation> {
                     child: Container(
                       padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
-                        color: Colors.red,
+                        color: AppColors.error,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                       child: Text(
                         _unreadCount > 99 ? '99+' : '$_unreadCount',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.background,
                           fontSize: 10,
                         ),
                         textAlign: TextAlign.center,

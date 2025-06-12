@@ -173,18 +173,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             UserCard(userName: userName, role: role),
             const SizedBox(height: 32),
-            if (role == 'owner')
+            ListTile(
+              tileColor: AppColors.lightGray,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              title: const Text(
+                '발주 이력 보기',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pushNamed(context, '/orderHistory');
+              },
+            ),
+            const SizedBox(height: 24),
+            if (role == 'owner') ...[
               InviteCodeSection(
                 isInviteCodeGenerated: isInviteCodeGenerated,
                 inviteCode: inviteCode,
                 onGenerateInviteCode: _generateInviteCode,
               ),
-            AppSettingsSection(
-              lowStockNotification: lowStockNotification,
-              onToggleLowStock: (value) => setState(() => lowStockNotification = value),
-              role: role,
-            ),
-            StoreSettingsSection(role: role),
+              AppSettingsSection(
+                lowStockNotification: lowStockNotification,
+                onToggleLowStock: (value) => setState(() => lowStockNotification = value),
+                role: role,
+              ),
+              StoreSettingsSection(role: role),
+            ] else if (role == 'manager') ...[
+              AppSettingsSection(
+                lowStockNotification: lowStockNotification,
+                onToggleLowStock: (value) => setState(() => lowStockNotification = value),
+                role: role,
+              ),
+            ],
+
             SecuritySection(
               isGoogleUser: isGoogleUser,
               onResetPassword: _sendPasswordResetEmail,
@@ -216,3 +237,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+

@@ -1,6 +1,8 @@
 // 홈 화면 > 재고부족 현황 보러가기 버튼
 
 import 'package:flutter/material.dart';
+import 'package:refill/colors.dart';
+import 'package:refill/home_service/low_stock_screen.dart';
 
 class LowStockButton extends StatelessWidget {
   final VoidCallback? onTap;
@@ -9,14 +11,17 @@ class LowStockButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap ?? () {
-        debugPrint("재고부족 현황 클릭됨");
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LowStockScreen()),
+        );
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFFEFEFEF),
+          color: AppColors.lightGray,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(

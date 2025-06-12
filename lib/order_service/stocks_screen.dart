@@ -11,14 +11,36 @@ class StocksScreen extends StatefulWidget {
 }
 
 class _StocksScreenState extends State<StocksScreen> {
-  bool isAuto = false;
   List<Map<String, dynamic>> stockItems = [];
+  List<Map<String, dynamic>> filteredStockItems = [];
   String role = 'staff'; // 기본값: staff
+  String _searchKeyword = '';
+  TextEditingController _searchController = TextEditingController();
+
+  final List<String> categories = ['시럽', '원두/우유', '파우더', '디저트', '티', '기타'];
+  int selectedCategory = 0;
 
   @override
   void initState() {
     super.initState();
     _loadStockData();
+    _searchController.addListener(_filterStockItems);
+  }
+
+  void _filterStockItems() {
+    final selected = categories[selectedCategory];
+    final keyword = _searchKeyword.trim();
+
+    setState(() {
+      filteredStockItems = stockItems
+          .where((item) {
+        final matchCategory = item['category'] == selected;
+        final matchSearch = item['name'].toString().toLowerCase().contains(keyword.toLowerCase());
+        return matchCategory && matchSearch;
+      })
+          .map((e) => {...e}) // 복사
+          .toList();
+    });
   }
 
   Future<void> _loadStockData() async {
@@ -53,16 +75,62 @@ class _StocksScreenState extends State<StocksScreen> {
         'defaultQuantity': template['defaultQuantity'] ?? 1,
         'stock': currentQty,
         'min': stock?['minQuantity'] ?? 0,
-        'count': currentQty, // ✅ 현재 재고 수량으로 초기화
+        'count': currentQty,
+        'category': template['category'] ?? '기타',  // 🔥 카테고리 필드 중요!
       };
     }).toList();
 
     setState(() {
       stockItems = combined;
+      _filterStockItems();
     });
   }
 
   Future<void> _saveStockChanges() async {
+    for (var i = 0; i < stockItems.length; i++) {
+      final itemName = stockItems[i]['name'];
+      final updated = filteredStockItems.firstWhere(
+            (e) => e['name'] == itemName,
+        orElse: () => {},
+      );
+      if (updated.isNotEmpty) {
+        stockItems[i]['count'] = updated['count'];
+      }
+    }
+
+    final changedItems = stockItems.where((item) => item['stock'] != item['count']).toList();
+
+    if (changedItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("변경된 재고가 없습니다.")),
+      );
+      return;
+    }
+
+    final summary = changedItems
+        .map((item) => '${item['name']} : ${item['stock']} → ${item['count']}')
+        .join('\n');
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("재고 수정 확인"),
+        content: Text("이대로 재고를 수정할까요?\n\n$summary"),
+        actions: [
+          TextButton(
+            child: const Text("취소"),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          TextButton(
+            child: const Text("확인"),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -71,24 +139,59 @@ class _StocksScreenState extends State<StocksScreen> {
 
     final batch = FirebaseFirestore.instance.batch();
 
-    for (var item in stockItems) {
+    for (var item in changedItems) {
       final count = item['count'];
       final itemName = item['name'];
 
-      final docRef = FirebaseFirestore.instance
-          .collection('stocks')
-          .doc(storeId)
-          .collection('items')
-          .doc(itemName);
-
-      batch.update(docRef, {'quantity': count}); // ✅ 입력한 수량 그대로 저장 (덮어쓰기)
+      batch.update(
+        FirebaseFirestore.instance
+            .collection('stocks')
+            .doc(storeId)
+            .collection('items')
+            .doc(itemName),
+        {'quantity': count},
+      );
     }
 
-    await batch.commit();
-    await _loadStockData();
+    try {
+      await batch.commit();
+      await _loadStockData();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("재고가 수정되었습니다.")),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("재고가 수정되었습니다.")),
+      );
+    } catch (e) {
+      print('🔥 재고 수정 실패: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("❗ 권한이 없어 재고를 수정할 수 없습니다."),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Widget _buildCategoryCell(int index) {
+    final isSelected = selectedCategory == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedCategory = index;
+        });
+        _filterStockItems();
+      },
+      child: Container(
+        height: 48,
+        alignment: Alignment.center,
+        color: isSelected ? AppColors.primary : AppColors.background,
+        child: Text(
+          categories[index],
+          style: TextStyle(
+            color: isSelected ? AppColors.background : AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
     );
   }
 
@@ -121,13 +224,18 @@ class _StocksScreenState extends State<StocksScreen> {
                 border: Border.all(color: AppColors.primary),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.search, color: AppColors.primary),
-                  SizedBox(width: 8),
+                  const Icon(Icons.search, color: AppColors.primary),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
-                      decoration: InputDecoration(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        _searchKeyword = value;
+                        _filterStockItems();
+                      },
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: '검색',
                       ),
@@ -139,13 +247,24 @@ class _StocksScreenState extends State<StocksScreen> {
 
             const SizedBox(height: 16),
 
+            // 카테고리 필터 Table
+            Table(
+              border: TableBorder.all(color: AppColors.primary),
+              children: [
+                TableRow(children: List.generate(3, (i) => _buildCategoryCell(i))),
+                TableRow(children: List.generate(3, (i) => _buildCategoryCell(i + 3))),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
             // 📦 재고 항목 리스트
             Expanded(
               child: ListView.separated(
-                itemCount: stockItems.length,
+                itemCount: filteredStockItems.length,
                 separatorBuilder: (_, __) => const Divider(),
                 itemBuilder: (context, index) {
-                  final item = stockItems[index];
+                  final item = filteredStockItems[index];
                   final isShort = item['stock'] < item['min'];
 
                   final stockText = (role == 'owner')
@@ -166,7 +285,7 @@ class _StocksScreenState extends State<StocksScreen> {
                           Text(
                             stockText,
                             style: TextStyle(
-                              color: isShort ? Colors.red : Colors.black54,
+                              color: isShort ? AppColors.error : AppColors.black,
                             ),
                           ),
                         ],
@@ -207,7 +326,7 @@ class _StocksScreenState extends State<StocksScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                 onPressed: _saveStockChanges,
-                child: const Text('재고 수정', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: const Text('재고 수정', style: TextStyle(fontSize: 16, color: AppColors.background)),
               ),
             ),
           ],

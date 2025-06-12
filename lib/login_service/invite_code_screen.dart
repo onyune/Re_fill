@@ -81,7 +81,7 @@ class _InviteCodeScreenState extends State<InviteCodeScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black,
+        foregroundColor: AppColors.black,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),

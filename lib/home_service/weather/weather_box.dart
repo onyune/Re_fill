@@ -4,6 +4,8 @@ import 'package:refill/colors.dart';
 import 'package:http/http.dart' as http;
 
 import 'weather_forecast_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:refill/providers/weather_provider.dart';
 
 class WeatherBox extends StatefulWidget {
   const WeatherBox({super.key});
@@ -30,12 +32,15 @@ class _WeatherBoxState extends State<WeatherBox> {
       final double lon = 126.8526;
 
       final data = await _fetchWeather(lat, lon);
-      final weatherMain = data['weather'][0]['main'];
+      final weatherMain = data['weather'][0]['main']; // 예: 'Clear', 'Rain', etc.
       final temp = data['main']['temp'];
       final humid = data['main']['humidity'];
       print('현재 습도: $humid');
+
+      Provider.of<WeatherProvider>(context, listen: false).updateWeather(weatherMain);
+
       setState(() {
-        weather = data['weather'][0]['description'];
+        weather = _translateWeather(weatherMain);
         temperature = '${temp.toStringAsFixed(1)}°C';
         humidity = '습도 $humid%';
         weatherIcon = _getWeatherIcon(weatherMain);
@@ -84,6 +89,28 @@ class _WeatherBoxState extends State<WeatherBox> {
         return Icons.blur_on;
       default:
         return Icons.wb_cloudy;
+    }
+  }
+
+  String _translateWeather(String main) {
+    switch (main.toLowerCase()) {
+      case 'clear':
+        return '맑음';
+      case 'clouds':
+        return '흐림';
+      case 'rain':
+        return '비';
+      case 'drizzle':
+        return '이슬비';
+      case 'snow':
+        return '눈';
+      case 'thunderstorm':
+        return '천둥번개';
+      case 'mist':
+      case 'fog':
+        return '안개';
+      default:
+        return '알 수 없음';
     }
   }
 

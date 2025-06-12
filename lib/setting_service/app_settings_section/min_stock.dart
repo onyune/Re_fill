@@ -84,6 +84,7 @@ class _MinStockListPageState extends State<MinStockListPage> {
           ),
         ),
       ),
+      backgroundColor: AppColors.background,
       body: ListView.separated(
         itemCount: stockItems.length,
         separatorBuilder: (_, __) => const Divider(),
